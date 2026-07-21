@@ -1,0 +1,29 @@
+/* 動画サイト風コメントエリアおよび流れるアニメーション定義 */
+.comment-overlay-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    background-color: #0f172a;
+    color: #ffffff;
+}
+
+/* 弾幕のように流れるコメントスタイル */
+.streaming-comment-item {
+    position: absolute;
+    white-space: nowrap;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-shadow: 1px 1px 2px #000000;
+    animation: streamAnimation 8s linear infinite;
+}
+
+@keyframes streamAnimation {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
