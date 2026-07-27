@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +19,11 @@ import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.UserAccountRep
 public class UserService {
 
     private final UserAccountRepository userAccountRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserAccountRepository userAccountRepository) {
+    public UserService(UserAccountRepository userAccountRepository, PasswordEncoder passwordEncoder) {
         this.userAccountRepository = userAccountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -31,6 +34,53 @@ public class UserService {
      */
     public Optional<UserAccount> findActiveUserByEmail(String emailAddress) {
         return userAccountRepository.findByEmailAddress(emailAddress);
+    }
+
+    /**
+     * IDを指定してユーザーを取得する。
+     *
+     * @param userId 検索対象のユーザーID
+     * @return 該当するユーザーアカウント（存在しない場合は empty）
+     */
+    public Optional<UserAccount> findById(Long userId) {
+        return userAccountRepository.findById(userId);
+    }
+
+    /**
+     * マイページからの表示名変更を反映する。
+     *
+     * @param userId         対象ユーザーID
+     * @param newDisplayName 変更後の表示名
+     * @return 更新後のユーザーアカウント
+     */
+    @Transactional
+    public UserAccount updateDisplayName(Long userId, String newDisplayName) {
+        UserAccount targetUser = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたユーザーが見つかりません。ID: " + userId));
+
+        targetUser.changeDisplayName(newDisplayName);
+        return userAccountRepository.save(targetUser);
+    }
+
+    /**
+     * 現在のパスワードを検証したうえでパスワードを変更する。
+     *
+     * @param userId          対象ユーザーID
+     * @param currentRawPassword 検証用の現在のパスワード（平文）
+     * @param newRawPassword     変更後の新しいパスワード（平文）
+     * @return 変更に成功した場合は更新後のユーザーアカウント、現パスワードが一致しない場合は empty
+     */
+    @Transactional
+    public Optional<UserAccount> changePassword(Long userId, String currentRawPassword, String newRawPassword) {
+        UserAccount targetUser = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたユーザーが見つかりません。ID: " + userId));
+
+        if (!passwordEncoder.matches(currentRawPassword, targetUser.getEncryptedPassword())) {
+            return Optional.empty();
+        }
+
+        targetUser.changeEncryptedPassword(passwordEncoder.encode(newRawPassword));
+        return Optional.of(userAccountRepository.save(targetUser));
     }
 
     /**

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.NoticeService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.Notice;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.NoticeCategory;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 
 /**
@@ -33,6 +34,8 @@ public class NoticeController {
     /* --- Model Keys --- */
     private static final String MODEL_KEY_NOTICE_LIST = "noticeList";
     private static final String MODEL_KEY_NOTICE_TARGET = "noticeTarget";
+    private static final String MODEL_KEY_CATEGORY_LIST = "categoryList";
+    private static final String MODEL_KEY_SELECTED_CATEGORY = "selectedCategory";
 
     private final NoticeService noticeService;
 
@@ -41,12 +44,17 @@ public class NoticeController {
     }
 
     /**
-     * お知らせ一覧画面を表示する。
+     * お知らせ一覧画面を表示する。カテゴリを指定した場合はそのカテゴリに絞り込む。
      */
     @GetMapping
-    public String showNoticeList(Model model) {
-        List<Notice> notices = noticeService.fetchAllNotices();
+    public String showNoticeList(
+            @RequestParam(name = "category", required = false) NoticeCategory category,
+            Model model) {
+
+        List<Notice> notices = noticeService.fetchNoticesByCategory(category);
         model.addAttribute(MODEL_KEY_NOTICE_LIST, notices);
+        model.addAttribute(MODEL_KEY_CATEGORY_LIST, NoticeCategory.values());
+        model.addAttribute(MODEL_KEY_SELECTED_CATEGORY, category);
         return VIEW_NOTICE_LIST;
     }
 
@@ -54,7 +62,8 @@ public class NoticeController {
      * 新規作成フォーム画面を表示する。
      */
     @GetMapping("/new")
-    public String showCreateForm() {
+    public String showCreateForm(Model model) {
+        model.addAttribute(MODEL_KEY_CATEGORY_LIST, NoticeCategory.values());
         return VIEW_NOTICE_CREATE_FORM;
     }
 
@@ -67,10 +76,12 @@ public class NoticeController {
     public String processCreateNotice(
             @RequestParam("title") String title,
             @RequestParam("content") String content,
+            @RequestParam("category") NoticeCategory category,
+            @RequestParam(name = "tags", required = false) String tags,
             HttpSession session) {
 
         UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
-        noticeService.createNotice(title, content, loginUser);
+        noticeService.createNotice(title, content, loginUser, category, tags);
 
         // 二重送信（F5リロード問題）を防止するため、処理完了後は一覧画面へリダイレクトする
         return REDIRECT_NOTICE_LIST;
@@ -88,6 +99,7 @@ public class NoticeController {
         }
 
         model.addAttribute(MODEL_KEY_NOTICE_TARGET, noticeOptional.get());
+        model.addAttribute(MODEL_KEY_CATEGORY_LIST, NoticeCategory.values());
         return VIEW_NOTICE_EDIT_FORM;
     }
 
@@ -98,9 +110,11 @@ public class NoticeController {
     public String processEditNotice(
             @PathVariable("id") Long noticeId,
             @RequestParam("title") String title,
-            @RequestParam("content") String content) {
+            @RequestParam("content") String content,
+            @RequestParam("category") NoticeCategory category,
+            @RequestParam(name = "tags", required = false) String tags) {
 
-        noticeService.updateNotice(noticeId, title, content);
+        noticeService.updateNotice(noticeId, title, content, category, tags);
         return REDIRECT_NOTICE_LIST;
     }
 
