@@ -1,4 +1,5 @@
-                <p class="page-footer">© 2026 Tokyo Hack Group All Rights Reserved.</p>
+<%@ page pageEncoding="UTF-8"%>
+                <p class="page-footer">&copy; 2026 Tokyo Hack Group All Rights Reserved.</p>
             </div>
         </main>
     </div>

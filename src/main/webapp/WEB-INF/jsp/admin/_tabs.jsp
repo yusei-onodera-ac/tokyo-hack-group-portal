@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <div class="tabs">
     <a class="tabs__link ${activeTab == 'users' ? 'is-active' : ''}" href="/admin/users">👤 ユーザー・権限管理</a>
