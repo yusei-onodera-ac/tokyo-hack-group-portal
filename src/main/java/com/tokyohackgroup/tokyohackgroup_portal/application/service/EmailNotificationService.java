@@ -26,6 +26,9 @@ public class EmailNotificationService {
     /** お知らせ通知の固定本文テンプレート */
     private static final String NOTICE_BODY_TEMPLATE = "新しいお知らせが投稿されました。ポータルサイトからご確認ください。";
 
+    /** ユーザー招待メール件名の接頭辞 */
+    private static final String INVITE_SUBJECT_PREFIX = "【ポータル招待】";
+
     private final JavaMailSender javaMailSender;
 
     public EmailNotificationService(JavaMailSender javaMailSender) {
@@ -69,6 +72,31 @@ public class EmailNotificationService {
         message.setTo(targetEmail);
         message.setSubject(NOTICE_SUBJECT_PREFIX + noticeTitle);
         message.setText(NOTICE_BODY_TEMPLATE);
+
+        try {
+            javaMailSender.send(message);
+        } catch (Exception exception) {
+            System.err.println("メール送信処理をスキップしました: " + exception.getMessage());
+        }
+    }
+
+    /**
+     * 管理者設定画面からの招待登録時に、仮パスワードを新規ユーザーへ通知する。
+     *
+     * @param targetEmail        宛先メールアドレス
+     * @param displayName        招待対象の表示名
+     * @param temporaryPassword  発行された仮パスワード（平文）
+     */
+    @Async
+    public void sendInviteEmail(String targetEmail, String displayName, String temporaryPassword) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setTo(targetEmail);
+        message.setSubject(INVITE_SUBJECT_PREFIX + "アカウントが発行されました");
+        message.setText(displayName + " 様\n\nTokyo Hack Group Portal のアカウントが発行されました。\n"
+                + "メールアドレス: " + targetEmail + "\n"
+                + "仮パスワード: " + temporaryPassword + "\n\n"
+                + "ログイン後、マイページから速やかにパスワードを変更してください。");
 
         try {
             javaMailSender.send(message);

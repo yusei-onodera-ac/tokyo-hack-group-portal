@@ -1,31 +1,31 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>お知らせ一覧 - Tokyo Hack Group Portal</title>
-</head>
-<body>
-    <h1>お知らせ一覧</h1>
+<c:set var="pageTitle" value="お知らせ一覧" scope="request" />
+<c:set var="activeNav" value="notices" scope="request" />
+<%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
+<div class="page-header">
+    <div class="page-header__title">
+        <h1 class="h1">お知らせ一覧</h1>
+    </div>
     <c:if test="${sessionScope.loginUser.admin}">
-        <p><a href="/notices/new">＋ 新規お知らせを作成する</a></p>
+        <div class="page-header__actions">
+            <a class="btn btn-primary" href="/notices/new">＋ 新規お知らせを作成する</a>
+        </div>
     </c:if>
+</div>
 
-    <p>
-        カテゴリで絞り込み：
-        <a href="/notices">すべて</a>
-        <c:forEach var="cat" items="${categoryList}">
-            &nbsp;|&nbsp;
-            <a href="/notices?category=${cat}"><c:out value="${cat.displayLabel}" /></a>
-        </c:forEach>
-    </p>
+<div class="filter-bar">
+    <a class="badge ${empty selectedCategory ? 'badge-primary' : 'badge-neutral'}" href="/notices">すべて</a>
+    <c:forEach var="cat" items="${categoryList}">
+        <a class="badge ${cat == selectedCategory ? 'badge-primary' : 'badge-neutral'}" href="/notices?category=${cat}"><c:out value="${cat.displayLabel}" /></a>
+    </c:forEach>
+</div>
 
-    <table border="1" cellpadding="8" cellspacing="0">
+<div class="table-wrap">
+    <table class="table">
         <thead>
             <tr>
-                <th>ID</th>
                 <th>タイトル</th>
                 <th>本文</th>
                 <th>カテゴリ</th>
@@ -40,10 +40,9 @@
         <tbody>
             <c:forEach var="notice" items="${noticeList}">
                 <tr>
-                    <td><c:out value="${notice.id}" /></td>
-                    <td><c:out value="${notice.title}" /></td>
+                    <td><strong><c:out value="${notice.title}" /></strong></td>
                     <td><c:out value="${notice.content}" /></td>
-                    <td><c:out value="${notice.category.displayLabel}" /></td>
+                    <td><span class="badge badge-neutral"><c:out value="${notice.category.displayLabel}" /></span></td>
                     <td><c:out value="${notice.tags}" /></td>
                     <td><c:out value="${notice.author.displayName}" /></td>
                     <td><c:out value="${notice.createdAt}" /></td>
@@ -54,7 +53,6 @@
             </c:forEach>
         </tbody>
     </table>
+</div>
 
-    <p style="margin-top: 20px;"><a href="/">← ダッシュボードへ戻る</a></p>
-</body>
-</html>
+<%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

@@ -2,6 +2,7 @@ package com.tokyohackgroup.tokyohackgroup_portal.presentation.controller;
 
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Controller;
@@ -10,8 +11,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.AuditLogService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.AuthenticationService;
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.SystemSettingService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.audit.AuditLogCategory;
 
 /**
  * ログイン・ログアウト処理および認証セッションの生成を制御するコントローラー。
@@ -38,9 +42,16 @@ public class LoginController {
     private static final String AUTHENTICATION_FAILED_MESSAGE = "メールアドレスまたはパスワードが正しくありません。";
 
     private final AuthenticationService authenticationService;
+    private final AuditLogService auditLogService;
+    private final SystemSettingService systemSettingService;
 
-    public LoginController(AuthenticationService authenticationService) {
+    public LoginController(
+            AuthenticationService authenticationService,
+            AuditLogService auditLogService,
+            SystemSettingService systemSettingService) {
         this.authenticationService = authenticationService;
+        this.auditLogService = auditLogService;
+        this.systemSettingService = systemSettingService;
     }
 
     /**
@@ -62,19 +73,27 @@ public class LoginController {
     public String processLogin(
             @RequestParam("emailAddress") String emailAddress,
             @RequestParam("rawPassword") String rawPassword,
+            HttpServletRequest request,
             HttpSession session,
             Model model) {
 
         Optional<UserAccount> authenticatedUserOptional = authenticationService.authenticateUser(emailAddress, rawPassword);
+        String remoteAddress = request.getRemoteAddr();
 
         if (authenticatedUserOptional.isEmpty()) {
+            auditLogService.record(null, AuditLogCategory.LOGIN, "ログイン失敗", remoteAddress, "メールアドレス: " + emailAddress);
             model.addAttribute(MODEL_KEY_ERROR_MESSAGE, AUTHENTICATION_FAILED_MESSAGE);
             model.addAttribute(MODEL_KEY_SAVED_EMAIL, emailAddress);
             return LOGIN_VIEW_NAME;
         }
 
-        // 認証成功時：セッションにログインユーザー情報を格納
-        session.setAttribute(SESSION_KEY_LOGIN_USER, authenticatedUserOptional.get());
+        UserAccount authenticatedUser = authenticatedUserOptional.get();
+
+        // 認証成功時：セッションにログインユーザー情報を格納し、システム設定のタイムアウト時間を反映する
+        session.setAttribute(SESSION_KEY_LOGIN_USER, authenticatedUser);
+        session.setMaxInactiveInterval(systemSettingService.getSessionTimeoutMinutes() * 60);
+
+        auditLogService.record(authenticatedUser, AuditLogCategory.LOGIN, "ログイン成功", remoteAddress, null);
 
         return REDIRECT_DASHBOARD_URL;
     }
