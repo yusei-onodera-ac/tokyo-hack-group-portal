@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.Notice;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.NoticeCategory;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.NoticeRepository;
 
@@ -24,7 +25,29 @@ public class NoticeService {
     }
 
     public List<Notice> fetchAllNotices() {
-        return noticeRepository.findAllByOrderByCreatedAtDesc();
+        List<Notice> notices = noticeRepository.findAllByOrderByCreatedAtDesc();
+        initializeAuthors(notices);
+        return notices;
+    }
+
+    /**
+     * 指定カテゴリに絞り込んだお知らせ一覧を取得する。カテゴリが null の場合は全件返す。
+     */
+    public List<Notice> fetchNoticesByCategory(NoticeCategory category) {
+        if (category == null) {
+            return fetchAllNotices();
+        }
+        List<Notice> notices = noticeRepository.findAllByCategoryOrderByCreatedAtDesc(category);
+        initializeAuthors(notices);
+        return notices;
+    }
+
+    /**
+     * open-in-view を無効化しているため、ビュー描画時の LazyInitializationException を防ぐべく
+     * トランザクション境界内で作成者の遅延ロードプロキシを初期化しておく。
+     */
+    private void initializeAuthors(List<Notice> notices) {
+        notices.forEach(notice -> notice.getAuthor().getDisplayName());
     }
 
     public Optional<Notice> findNoticeById(Long noticeId) {
@@ -32,14 +55,13 @@ public class NoticeService {
     }
 
     @Transactional
-    public void createNotice(String title, String content, UserAccount author) {
-        // 標準では全体公開のお知らせとして作成・永続化する
-        Notice newNotice = new Notice(title, content, author);
+    public void createNotice(String title, String content, UserAccount author, NoticeCategory category, String tags) {
+        Notice newNotice = new Notice(title, content, author, category, tags);
         noticeRepository.save(newNotice);
     }
 
     @Transactional
-    public void updateNotice(Long noticeId, String newTitle, String newContent) {
+    public void updateNotice(Long noticeId, String newTitle, String newContent, NoticeCategory newCategory, String newTags) {
         Optional<Notice> existingNoticeOptional = noticeRepository.findById(noticeId);
 
         if (existingNoticeOptional.isEmpty()) {
@@ -47,7 +69,7 @@ public class NoticeService {
         }
 
         Notice existingNotice = existingNoticeOptional.get();
-        existingNotice.modifyContent(newTitle, newContent);
+        existingNotice.modifyContent(newTitle, newContent, newCategory, newTags);
 
         noticeRepository.save(existingNotice);
     }

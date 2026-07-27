@@ -100,4 +100,18 @@ public class UserAccount {
     public boolean isAdmin() {
         return UserRole.ADMINISTRATOR.equals(this.role);
     }
+
+    /**
+     * マイページからの表示名変更を反映する。
+     */
+    public void changeDisplayName(String newDisplayName) {
+        this.displayName = newDisplayName;
+    }
+
+    /**
+     * パスワード変更時に、既に暗号化されたハッシュ値へ差し替える。
+     */
+    public void changeEncryptedPassword(String newEncryptedPassword) {
+        this.encryptedPassword = newEncryptedPassword;
+    }
 }
