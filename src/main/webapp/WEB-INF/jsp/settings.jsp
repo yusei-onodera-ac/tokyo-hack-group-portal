@@ -1,71 +1,74 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>ユーザー設定 - Tokyo Hack Group Portal</title>
-</head>
-<body>
-    <h1>ユーザー設定 (マイページ)</h1>
+<c:set var="pageTitle" value="マイページ" scope="request" />
+<c:set var="activeNav" value="settings" scope="request" />
+<%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
-    <h2>登録情報</h2>
-    <table border="1" cellpadding="8" cellspacing="0">
-        <tr>
-            <th>メールアドレス</th>
-            <td><c:out value="${sessionScope.loginUser.emailAddress}" /></td>
-        </tr>
-        <tr>
-            <th>表示名</th>
-            <td><c:out value="${sessionScope.loginUser.displayName}" /></td>
-        </tr>
-        <tr>
-            <th>権限</th>
-            <td><c:out value="${sessionScope.loginUser.role.displayLabel}" /></td>
-        </tr>
-    </table>
+<div class="page-header">
+    <div class="page-header__title">
+        <h1 class="h1">ユーザー設定（マイページ）</h1>
+    </div>
+</div>
 
-    <hr style="margin: 30px 0;">
+<div class="grid grid-2">
+    <div class="card card-pad">
+        <h2 class="h2 mb-0">登録情報</h2>
+        <div class="table-wrap mt-4">
+            <table class="table">
+                <tr>
+                    <th>メールアドレス</th>
+                    <td><c:out value="${sessionScope.loginUser.emailAddress}" /></td>
+                </tr>
+                <tr>
+                    <th>表示名</th>
+                    <td><c:out value="${sessionScope.loginUser.displayName}" /></td>
+                </tr>
+                <tr>
+                    <th>権限</th>
+                    <td><span class="badge ${sessionScope.loginUser.admin ? 'badge-primary' : 'badge-neutral'}"><c:out value="${sessionScope.loginUser.role.displayLabel}" /></span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
 
-    <h2>表示名の変更</h2>
-    <c:if test="${not empty profileMessage}">
-        <p style="color: green;"><strong>${profileMessage}</strong></p>
-    </c:if>
-    <form action="/settings/profile" method="post">
-        <label for="displayName">新しい表示名:</label><br>
-        <input type="text" id="displayName" name="displayName" value="<c:out value='${sessionScope.loginUser.displayName}'/>" required style="width: 300px;">
-        <br><br>
-        <button type="submit">表示名を更新する</button>
-    </form>
+    <div class="card card-pad">
+        <h2 class="h2 mb-0">表示名の変更</h2>
+        <c:if test="${not empty profileMessage}">
+            <div class="alert alert-success mt-2"><c:out value="${profileMessage}" /></div>
+        </c:if>
+        <form action="/settings/profile" method="post" class="mt-4">
+            <div class="form-group">
+                <label class="form-label" for="displayName">新しい表示名</label>
+                <input class="input" type="text" id="displayName" name="displayName" value="<c:out value='${sessionScope.loginUser.displayName}'/>" required>
+            </div>
+            <button type="submit" class="btn btn-primary">表示名を更新する</button>
+        </form>
+    </div>
+</div>
 
-    <hr style="margin: 30px 0;">
-
-    <h2>パスワードの変更</h2>
+<div class="card card-pad mt-4" style="max-width: 480px;">
+    <h2 class="h2 mb-0">パスワードの変更</h2>
     <c:if test="${not empty passwordMessage}">
-        <p style="color: green;"><strong>${passwordMessage}</strong></p>
+        <div class="alert alert-success mt-2"><c:out value="${passwordMessage}" /></div>
     </c:if>
     <c:if test="${not empty passwordErrorMessage}">
-        <p style="color: red;"><strong>${passwordErrorMessage}</strong></p>
+        <div class="alert alert-danger mt-2"><c:out value="${passwordErrorMessage}" /></div>
     </c:if>
-    <form action="/settings/password" method="post">
-        <div>
-            <label for="currentPassword">現在のパスワード:</label><br>
-            <input type="password" id="currentPassword" name="currentPassword" required style="width: 300px;">
+    <form action="/settings/password" method="post" class="mt-4">
+        <div class="form-group">
+            <label class="form-label" for="currentPassword">現在のパスワード</label>
+            <input class="input" type="password" id="currentPassword" name="currentPassword" required>
         </div>
-        <br>
-        <div>
-            <label for="newPassword">新しいパスワード:</label><br>
-            <input type="password" id="newPassword" name="newPassword" required style="width: 300px;">
+        <div class="form-group">
+            <label class="form-label" for="newPassword">新しいパスワード</label>
+            <input class="input" type="password" id="newPassword" name="newPassword" required>
         </div>
-        <br>
-        <div>
-            <label for="confirmPassword">新しいパスワード (確認):</label><br>
-            <input type="password" id="confirmPassword" name="confirmPassword" required style="width: 300px;">
+        <div class="form-group">
+            <label class="form-label" for="confirmPassword">新しいパスワード（確認）</label>
+            <input class="input" type="password" id="confirmPassword" name="confirmPassword" required>
         </div>
-        <br>
-        <button type="submit">パスワードを変更する</button>
+        <button type="submit" class="btn btn-primary">パスワードを変更する</button>
     </form>
+</div>
 
-    <p style="margin-top: 20px;"><a href="/">← ダッシュボードへ戻る</a></p>
-</body>
-</html>
+<%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

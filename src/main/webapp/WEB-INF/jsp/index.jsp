@@ -1,64 +1,54 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Tokyo Hack Group - ポータルHOME</title>
-</head>
-<body>
-    <h1>Tokyo Hack Group ポータルサイト</h1>
-    <p>ようこそ！以下のメニューから各機能へ移動できます。</p>
+<c:set var="pageTitle" value="ホーム" scope="request" />
+<c:set var="activeNav" value="" scope="request" />
+<%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
-    <hr>
+<div class="page-header">
+    <div class="page-header__title">
+        <h1 class="h1">おかえりなさい、<c:out value="${sessionScope.loginUser.displayName}" /> さん</h1>
+        <p class="text-muted text-sm">以下のメニューから各機能へ移動できます。</p>
+    </div>
+</div>
 
-    <h2>📌 メインメニュー (機能一覧)</h2>
-    <ul>
-        <li>
-            <strong>📢 お知らせ (掲示板)</strong><br>
-            イベントや重要事項の共有・メンバー限定通知<br>
-            <a href="/notices">▶ お知らせ一覧を見る</a>
-        </li>
-        <br>
-        <li>
-            <strong>📁 プロジェクト一覧</strong><br>
-            各プロジェクトの状況確認、資料のリアルタイム同時編集<br>
-            <a href="/projects">▶ プロジェクト一覧を見る</a>
-        </li>
-        <br>
-        <li>
-            <strong>🔗 外部サービスのリンク集</strong><br>
-            Slack、Canva などの便利ツールへのリンク管理<br>
-            <a href="/links">▶ 外部リンク集を開く</a>
-        </li>
-        <br>
-        <li>
-            <strong>👥 メンバー一覧</strong><br>
-            登録メンバーの役割や参加プロジェクトの確認<br>
-            <a href="/members">▶ メンバー一覧を見る</a>
-        </li>
-        <br>
-        <li>
-            <strong>📅 スケジュール ＆ 日程調整</strong><br>
-            イベント・ハッカソンカレンダー、出欠確認（〇△×）<br>
-            <a href="/schedules">▶ スケジュールカレンダーを開く</a>
-        </li>
-        <br>
-        <li>
-            <strong>⚙️ 設定</strong><br>
-            パスワード変更、プロフィール編集<br>
-            <a href="/settings">▶ ユーザー設定を開く</a>
-        </li>
-        <br>
-        <li>
-            <strong>✉️ 管理者に連絡</strong><br>
-            バグ報告やシステムに関するお問い合わせ<br>
-            <a href="/contact">▶ 管理者へ問い合わせる</a>
-        </li>
-    </ul>
+<div class="grid grid-menu">
+    <a class="menu-card" href="/notices">
+        <span class="menu-card__icon">📢</span>
+        <span class="menu-card__title">お知らせ</span>
+        <span class="menu-card__desc">イベントや重要事項の共有・メンバー限定通知</span>
+    </a>
+    <a class="menu-card" href="/projects">
+        <span class="menu-card__icon">📁</span>
+        <span class="menu-card__title">プロジェクト一覧</span>
+        <span class="menu-card__desc">各プロジェクトの状況確認、メンバー管理</span>
+    </a>
+    <a class="menu-card" href="/links">
+        <span class="menu-card__icon">🔗</span>
+        <span class="menu-card__title">外部サービスのリンク集</span>
+        <span class="menu-card__desc">Slack、Canva などの便利ツールへのリンク管理</span>
+    </a>
+    <a class="menu-card" href="/members">
+        <span class="menu-card__icon">👥</span>
+        <span class="menu-card__title">メンバー一覧</span>
+        <span class="menu-card__desc">登録メンバーの役割や参加プロジェクトの確認</span>
+    </a>
+    <a class="menu-card" href="/settings">
+        <span class="menu-card__icon">⚙️</span>
+        <span class="menu-card__title">マイページ</span>
+        <span class="menu-card__desc">パスワード変更、プロフィール編集</span>
+    </a>
+    <a class="menu-card" href="/contact">
+        <span class="menu-card__icon">✉️</span>
+        <span class="menu-card__title">管理者に連絡</span>
+        <span class="menu-card__desc">バグ報告やシステムに関するお問い合わせ</span>
+    </a>
+    <c:if test="${sessionScope.loginUser.admin}">
+        <a class="menu-card" href="/admin">
+            <span class="menu-card__icon">🛡️</span>
+            <span class="menu-card__title">管理者設定</span>
+            <span class="menu-card__desc">ユーザー・権限、システム設定、監査ログ</span>
+        </a>
+    </c:if>
+</div>
 
-    <hr>
-    
-    <p><small>© 2026 Tokyo Hack Group All Rights Reserved.</small></p>
-</body>
-</html>
+<%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

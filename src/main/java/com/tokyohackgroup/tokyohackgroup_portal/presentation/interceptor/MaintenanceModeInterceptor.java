@@ -7,22 +7,30 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.SystemSettingService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.presentation.controller.LoginController;
 
 /**
- * 管理者権限（ADMINISTRATOR）を持つユーザーのみアクセスを許可するインターセプター。
- *
- * <p>AuthenticationInterceptor による認証済みチェックの後段で動作し、
- * お知らせ・外部リンクの作成/編集/削除など管理操作用エンドポイントを保護する。</p>
+ * メンテナンスモード中、管理者以外のアクセスをメンテナンス画面へフォワードして遮断するインターセプター。
  */
 @Component
-public class AdminAccessInterceptor implements HandlerInterceptor {
+public class MaintenanceModeInterceptor implements HandlerInterceptor {
 
-    private static final String FORBIDDEN_VIEW_PATH = "/WEB-INF/jsp/error/403.jsp";
+    private static final String MAINTENANCE_VIEW_PATH = "/WEB-INF/jsp/maintenance.jsp";
+
+    private final SystemSettingService systemSettingService;
+
+    public MaintenanceModeInterceptor(SystemSettingService systemSettingService) {
+        this.systemSettingService = systemSettingService;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (!systemSettingService.isMaintenanceModeEnabled()) {
+            return true;
+        }
+
         HttpSession session = request.getSession(false);
         UserAccount loginUser = (session != null)
                 ? (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER)
@@ -32,9 +40,8 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 管理者以外からのアクセスは403で遮断し、スタイル付きのエラー画面を表示する
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        request.getRequestDispatcher(FORBIDDEN_VIEW_PATH).forward(request, response);
+        response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+        request.getRequestDispatcher(MAINTENANCE_VIEW_PATH).forward(request, response);
         return false;
     }
 }

@@ -114,4 +114,25 @@ public class UserAccount {
     public void changeEncryptedPassword(String newEncryptedPassword) {
         this.encryptedPassword = newEncryptedPassword;
     }
+
+    /**
+     * 管理者設定画面からのロール変更を反映する。
+     */
+    public void changeRole(UserRole newRole) {
+        this.role = newRole;
+    }
+
+    /**
+     * アカウントを有効化する。
+     */
+    public void activate() {
+        this.isActive = true;
+    }
+
+    /**
+     * アカウントを無効化（Ban）する。
+     */
+    public void deactivate() {
+        this.isActive = false;
+    }
 }

@@ -2,6 +2,8 @@ package com.tokyohackgroup.tokyohackgroup_portal.domain.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -28,4 +30,10 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
      * @return 既に登録済みの場合は true
      */
     boolean existsByEmailAddress(String emailAddress);
+
+    /**
+     * 管理者設定画面でのユーザー検索用。表示名またはメールアドレスの部分一致でページング取得する。
+     */
+    Page<UserAccount> findByDisplayNameContainingIgnoreCaseOrEmailAddressContainingIgnoreCase(
+            String displayNameKeyword, String emailAddressKeyword, Pageable pageable);
 }
