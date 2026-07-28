@@ -5,5 +5,6 @@
     </div>
 </div>
 <script src="/js/app.js"></script>
+<script src="/js/notifications.js"></script>
 </body>
 </html>

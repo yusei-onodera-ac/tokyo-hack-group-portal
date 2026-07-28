@@ -61,4 +61,24 @@
     </c:if>
 </div>
 
+<h2 class="h2 mt-5">📰 最近の活動</h2>
+<div class="card card-pad mt-2">
+    <c:choose>
+        <c:when test="${empty activityFeed}">
+            <p class="text-muted">最近の活動はまだありません。</p>
+        </c:when>
+        <c:otherwise>
+            <c:forEach var="item" items="${activityFeed}">
+                <div class="comment-item">
+                    <span style="font-size:1.2rem;"><c:out value="${item.icon}" /></span>
+                    <div class="comment-item__body">
+                        <a href="<c:out value='${item.linkUrl}'/>"><c:out value="${item.message}" /></a>
+                        <div class="text-muted text-sm"><c:out value="${item.occurredAt}" /></div>
+                    </div>
+                </div>
+            </c:forEach>
+        </c:otherwise>
+    </c:choose>
+</div>
+
 <%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

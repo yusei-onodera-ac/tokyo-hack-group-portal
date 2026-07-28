@@ -1,7 +1,9 @@
 package com.tokyohackgroup.tokyohackgroup_portal.presentation.controller;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpSession;
@@ -48,9 +50,17 @@ public class PollController {
     public String showPollList(HttpSession session, Model model) {
         UserAccount loginUser = getLoginUser(session);
 
+        List<SchedulingPoll> polls = schedulingPollService.fetchPollsForUser(loginUser);
+        Map<Long, Boolean> respondedMap = new LinkedHashMap<>();
+        for (SchedulingPoll poll : polls) {
+            respondedMap.put(poll.getId(), schedulingPollService.hasUserRespondedToAll(poll, loginUser));
+        }
+
         model.addAttribute("pageTitle", "日程調整");
         model.addAttribute("activeNav", "polls");
-        model.addAttribute("pollList", schedulingPollService.fetchPollsForUser(loginUser));
+        model.addAttribute("pollList", polls);
+        model.addAttribute("respondedMap", respondedMap);
+        model.addAttribute("currentUserId", loginUser.getId());
         model.addAttribute("myProjectList", projectService.findProjectsForUser(loginUser));
         model.addAttribute("memberList", userService.fetchAllActiveUsers());
         return VIEW_POLL_LIST;
@@ -91,12 +101,18 @@ public class PollController {
             return REDIRECT_POLL_LIST;
         }
 
+        boolean isOrganizer = poll.isOrganizer(loginUser) || loginUser.isAdmin();
+        boolean isInvitee = poll.getInvitees().stream().anyMatch(invitee -> invitee.getId().equals(loginUser.getId()));
+
         model.addAttribute("pageTitle", poll.getTitle());
         model.addAttribute("activeNav", "polls");
         model.addAttribute("pollTarget", poll);
         model.addAttribute("responseMatrix", schedulingPollService.buildResponseMatrix(poll));
         model.addAttribute("answerList", PollAnswer.values());
-        model.addAttribute("isOrganizer", poll.isOrganizer(loginUser) || loginUser.isAdmin());
+        model.addAttribute("isOrganizer", isOrganizer);
+        model.addAttribute("isInvitee", isInvitee);
+        model.addAttribute("currentUserId", loginUser.getId());
+        model.addAttribute("hasRespondedToAll", schedulingPollService.hasUserRespondedToAll(poll, loginUser));
         return VIEW_POLL_DETAIL;
     }
 
@@ -134,6 +150,21 @@ public class PollController {
         UserAccount loginUser = getLoginUser(session);
         schedulingPollService.confirmPoll(pollId, candidateId, loginUser);
         return "redirect:/polls/" + pollId;
+    }
+
+    /**
+     * 日程調整を削除する。主催者または管理者のみ実行可能。
+     */
+    @PostMapping("/{id}/delete")
+    public String processDeletePoll(@PathVariable("id") Long pollId, HttpSession session) {
+        UserAccount loginUser = getLoginUser(session);
+        try {
+            schedulingPollService.deletePoll(pollId, loginUser);
+        } catch (IllegalStateException permissionDenied) {
+            // 権限がない場合は削除せず詳細画面へ戻す
+            return "redirect:/polls/" + pollId;
+        }
+        return REDIRECT_POLL_LIST;
     }
 
     private UserAccount getLoginUser(HttpSession session) {

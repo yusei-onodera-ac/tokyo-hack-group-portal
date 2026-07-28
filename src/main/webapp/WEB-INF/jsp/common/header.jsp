@@ -21,6 +21,10 @@
 
         <nav class="sidebar__nav">
             <span class="sidebar__section-label">メニュー</span>
+            <a class="sidebar__link ${activeNav == 'notifications' ? 'is-active' : ''}" href="/notifications">
+                <span class="sidebar__link-icon">🔔</span>通知
+                <span class="badge badge-danger" id="notification-badge" style="display:none; margin-left:auto;"></span>
+            </a>
             <a class="sidebar__link ${activeNav == 'notices' ? 'is-active' : ''}" href="/notices">
                 <span class="sidebar__link-icon">📢</span>お知らせ
             </a>

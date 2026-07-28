@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.NotificationService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.notification.UserNotificationPreference;
 
 /**
  * マイページ（プロフィール照会・表示名変更・パスワード変更）を制御するコントローラー。
@@ -26,18 +28,43 @@ public class ProfileController {
     private static final String MODEL_KEY_PROFILE_MESSAGE = "profileMessage";
     private static final String MODEL_KEY_PASSWORD_MESSAGE = "passwordMessage";
     private static final String MODEL_KEY_PASSWORD_ERROR = "passwordErrorMessage";
+    private static final String MODEL_KEY_NOTIFICATION_MESSAGE = "notificationMessage";
 
     private final UserService userService;
+    private final NotificationService notificationService;
 
-    public ProfileController(UserService userService) {
+    public ProfileController(UserService userService, NotificationService notificationService) {
         this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     /**
      * マイページ画面を表示する。
      */
     @GetMapping
-    public String showSettingsPage() {
+    public String showSettingsPage(HttpSession session, Model model) {
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        UserNotificationPreference preference = notificationService.getOrCreatePreference(loginUser);
+        model.addAttribute("notificationPreference", preference);
+        return VIEW_SETTINGS;
+    }
+
+    /**
+     * メール通知のオン/オフ設定を更新する。
+     */
+    @PostMapping("/notifications")
+    public String processUpdateNotificationPreference(
+            @RequestParam(name = "noticeEmailEnabled", required = false, defaultValue = "false") boolean noticeEmailEnabled,
+            @RequestParam(name = "pollOpenedEmailEnabled", required = false, defaultValue = "false") boolean pollOpenedEmailEnabled,
+            @RequestParam(name = "pollConfirmedEmailEnabled", required = false, defaultValue = "false") boolean pollConfirmedEmailEnabled,
+            HttpSession session,
+            Model model) {
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        notificationService.updatePreference(loginUser, noticeEmailEnabled, pollOpenedEmailEnabled, pollConfirmedEmailEnabled);
+
+        model.addAttribute("notificationPreference", notificationService.getOrCreatePreference(loginUser));
+        model.addAttribute(MODEL_KEY_NOTIFICATION_MESSAGE, "通知設定を更新しました。");
         return VIEW_SETTINGS;
     }
 

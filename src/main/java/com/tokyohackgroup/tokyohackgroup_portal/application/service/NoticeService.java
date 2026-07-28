@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.Notice;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.NoticeCategory;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.notification.NotificationType;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.NoticeRepository;
 
 /**
@@ -19,9 +20,19 @@ import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.NoticeReposito
 public class NoticeService {
 
     private final NoticeRepository noticeRepository;
+    private final UserService userService;
+    private final NotificationService notificationService;
+    private final EmailNotificationService emailNotificationService;
 
-    public NoticeService(NoticeRepository noticeRepository) {
+    public NoticeService(
+            NoticeRepository noticeRepository,
+            UserService userService,
+            NotificationService notificationService,
+            EmailNotificationService emailNotificationService) {
         this.noticeRepository = noticeRepository;
+        this.userService = userService;
+        this.notificationService = notificationService;
+        this.emailNotificationService = emailNotificationService;
     }
 
     public List<Notice> fetchAllNotices() {
@@ -58,6 +69,20 @@ public class NoticeService {
     public void createNotice(String title, String content, UserAccount author, NoticeCategory category, String tags) {
         Notice newNotice = new Notice(title, content, author, category, tags);
         noticeRepository.save(newNotice);
+
+        List<UserAccount> recipients = newNotice.isPublicToAll()
+                ? userService.fetchAllActiveUsers()
+                : List.copyOf(newNotice.getAllowedMembers());
+
+        for (UserAccount recipient : recipients) {
+            if (recipient.getId().equals(author.getId())) {
+                continue;
+            }
+            notificationService.notify(recipient, NotificationType.NOTICE, "新しいお知らせ: " + title, null, "/notices");
+            if (notificationService.isNoticeEmailEnabled(recipient)) {
+                emailNotificationService.sendNoticeNotification(recipient.getEmailAddress(), title);
+            }
+        }
     }
 
     @Transactional

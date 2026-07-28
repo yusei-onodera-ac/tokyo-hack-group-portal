@@ -2,6 +2,7 @@
   "use strict";
 
   var POLL_INTERVAL_MS = 4000;
+  var ANSWER_LABELS = { AVAILABLE: "○", MAYBE: "△", UNAVAILABLE: "×" };
 
   function setupCandidateAdder() {
     var addButton = document.getElementById("add-candidate-btn");
@@ -24,6 +25,20 @@
       return;
     }
 
+    function applyOwnResponse(candidateId, answer, comment) {
+      var container = document.querySelector('[data-vote-buttons="' + candidateId + '"]');
+      if (container) {
+        container.querySelectorAll("[data-answer]").forEach(function (button) {
+          button.classList.toggle("btn-primary", button.getAttribute("data-answer") === answer);
+          button.classList.toggle("btn-secondary", button.getAttribute("data-answer") !== answer);
+        });
+      }
+      var commentInput = document.querySelector('[data-comment-input="' + candidateId + '"]');
+      if (commentInput && document.activeElement !== commentInput) {
+        commentInput.value = comment || "";
+      }
+    }
+
     function refreshStatus() {
       fetch("/polls/" + config.pollId + "/status")
           .then(function (response) { return response.json(); })
@@ -33,7 +48,7 @@
               cell.removeAttribute("title");
             });
 
-            var availableCounts = {};
+            var countsByCandidate = {};
 
             responses.forEach(function (item) {
               var selector = '[data-cell-candidate="' + item.candidateId + '"][data-cell-user="' + item.userId + '"]';
@@ -44,8 +59,14 @@
                   cell.title = item.comment;
                 }
               }
-              if (item.answer === "AVAILABLE") {
-                availableCounts[item.candidateId] = (availableCounts[item.candidateId] || 0) + 1;
+
+              if (!countsByCandidate[item.candidateId]) {
+                countsByCandidate[item.candidateId] = { AVAILABLE: 0, MAYBE: 0, UNAVAILABLE: 0 };
+              }
+              countsByCandidate[item.candidateId][item.answer] += 1;
+
+              if (config.currentUserId && String(item.userId) === String(config.currentUserId)) {
+                applyOwnResponse(item.candidateId, item.answer, item.comment);
               }
             });
 
@@ -55,14 +76,28 @@
 
             var bestCandidateId = null;
             var bestCount = 0;
-            Object.keys(availableCounts).forEach(function (candidateId) {
-              if (availableCounts[candidateId] > bestCount) {
-                bestCount = availableCounts[candidateId];
+
+            Object.keys(countsByCandidate).forEach(function (candidateId) {
+              var counts = countsByCandidate[candidateId];
+              var countCell = document.querySelector('[data-count-candidate="' + candidateId + '"]');
+              if (countCell) {
+                countCell.textContent = ANSWER_LABELS.AVAILABLE + counts.AVAILABLE + " "
+                    + ANSWER_LABELS.MAYBE + counts.MAYBE + " "
+                    + ANSWER_LABELS.UNAVAILABLE + counts.UNAVAILABLE;
+              }
+              if (counts.AVAILABLE > bestCount) {
+                bestCount = counts.AVAILABLE;
                 bestCandidateId = candidateId;
               }
             });
 
-            if (bestCandidateId) {
+            document.querySelectorAll("[data-count-candidate]").forEach(function (cell) {
+              if (cell.textContent === "集計中…") {
+                cell.textContent = ANSWER_LABELS.AVAILABLE + "0 " + ANSWER_LABELS.MAYBE + "0 " + ANSWER_LABELS.UNAVAILABLE + "0";
+              }
+            });
+
+            if (bestCandidateId && bestCount > 0) {
               var bestRow = document.querySelector('[data-candidate-row="' + bestCandidateId + '"]');
               if (bestRow) {
                 bestRow.classList.add("is-best-candidate");
@@ -76,18 +111,18 @@
 
       container.querySelectorAll("[data-answer]").forEach(function (button) {
         button.addEventListener("click", function () {
-          container.querySelectorAll("[data-answer]").forEach(function (b) { b.classList.remove("btn-primary"); });
-          button.classList.add("btn-primary");
-
           var commentInput = document.querySelector('[data-comment-input="' + candidateId + '"]');
           var comment = commentInput ? commentInput.value : "";
+          var answer = button.getAttribute("data-answer");
+
+          applyOwnResponse(candidateId, answer, comment);
 
           fetch("/polls/" + config.pollId + "/vote", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
               candidateId: candidateId,
-              answer: button.getAttribute("data-answer"),
+              answer: answer,
               comment: comment
             })
           }).then(refreshStatus);

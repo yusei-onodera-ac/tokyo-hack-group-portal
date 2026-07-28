@@ -1,5 +1,6 @@
 package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -130,6 +131,27 @@ public class CalendarService {
         participants.forEach(newEvent::addParticipant);
 
         return calendarEventRepository.save(newEvent);
+    }
+
+    /**
+     * タスクの期限をカレンダーへ同期するための内部専用メソッド。{@link TaskService} からのみ呼び出す想定で、
+     * ユーザー操作起点の編集権限チェックは行わない。
+     */
+    @Transactional
+    public CalendarEvent createLinkedTaskEvent(Project project, String title, LocalDate dueDate, UserAccount creator) {
+        LocalDateTime start = dueDate.atStartOfDay();
+        CalendarEvent newEvent = new CalendarEvent(project, title, CalendarEventType.PERSONAL_TASK, start, start, true,
+                "タスクの期限として自動登録された予定です。", null, creator);
+        newEvent.addParticipant(creator);
+        return calendarEventRepository.save(newEvent);
+    }
+
+    /**
+     * タスク削除時に連動削除するための内部専用メソッド。権限チェックは行わない。
+     */
+    @Transactional
+    public void deleteEventInternal(Long eventId) {
+        calendarEventRepository.findById(eventId).ifPresent(calendarEventRepository::delete);
     }
 
     private CalendarEvent findEventOrThrow(Long eventId) {
