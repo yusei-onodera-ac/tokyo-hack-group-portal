@@ -22,6 +22,9 @@
         </div>
         <p class="text-muted">作成者: <c:out value="${projectTarget.createdBy.displayName}" /> ／ 最終更新: <c:out value="${projectTarget.updatedAt}" /></p>
     </div>
+    <div class="page-header__actions">
+        <a class="btn btn-secondary" href="/calendar?projectId=${projectTarget.id}">📅 このプロジェクトのカレンダー</a>
+    </div>
 </div>
 
 <div class="grid grid-2">
@@ -73,6 +76,127 @@
             </c:forEach>
         </tbody>
     </table>
+</div>
+
+<div class="page-header mt-5">
+    <div class="page-header__title">
+        <h2 class="h2 mb-0">ドキュメント</h2>
+    </div>
+    <div class="page-header__actions">
+        <button type="button" class="btn btn-secondary" data-modal-open="new-text-document-modal">＋ テキストを新規作成</button>
+        <button type="button" class="btn btn-primary" data-modal-open="new-file-document-modal">＋ ファイルをアップロード</button>
+    </div>
+</div>
+
+<c:choose>
+    <c:when test="${empty documentList}">
+        <div class="empty-state card">
+            <div class="empty-state__icon">📄</div>
+            <p>まだドキュメントが登録されていません。</p>
+        </div>
+    </c:when>
+    <c:otherwise>
+        <div class="table-wrap mt-2">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>タイトル</th>
+                        <th>種別</th>
+                        <th>カテゴリ</th>
+                        <th>最新バージョン</th>
+                        <th>作成者</th>
+                        <th>更新日時</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:forEach var="doc" items="${documentList}">
+                        <tr>
+                            <td><a href="/projects/${projectTarget.id}/documents/${doc.id}"><c:out value="${doc.title}" /></a></td>
+                            <td><span class="badge badge-neutral"><c:out value="${doc.documentType.displayLabel}" /></span></td>
+                            <td><c:out value="${doc.category.displayLabel}" /></td>
+                            <td>v<c:out value="${doc.latestVersion.get().versionNumber}" /></td>
+                            <td><c:out value="${doc.createdBy.displayName}" /></td>
+                            <td><c:out value="${doc.updatedAt}" /></td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </c:otherwise>
+</c:choose>
+
+<div class="modal-overlay" id="new-file-document-modal">
+    <div class="modal">
+        <form action="/projects/${projectTarget.id}/documents/upload" method="post" enctype="multipart/form-data">
+            <div class="modal__header">
+                <span class="modal__title">ファイルをアップロード</span>
+                <button type="button" class="modal__close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal__body">
+                <div class="form-group">
+                    <label class="form-label" for="fileDocTitle">タイトル</label>
+                    <input class="input" type="text" id="fileDocTitle" name="title" required maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fileDocDescription">概要説明</label>
+                    <textarea class="textarea" id="fileDocDescription" name="description" maxlength="1000"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fileDocCategory">カテゴリ</label>
+                    <select class="select" id="fileDocCategory" name="category">
+                        <c:forEach var="cat" items="${categoryList}">
+                            <option value="${cat}"><c:out value="${cat.displayLabel}" /></option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fileDocFile">ファイル（PDF/Word/Excel/画像/Zip）</label>
+                    <input class="input" type="file" id="fileDocFile" name="file" required>
+                </div>
+            </div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>キャンセル</button>
+                <button type="submit" class="btn btn-primary">アップロード</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="new-text-document-modal">
+    <div class="modal">
+        <form action="/projects/${projectTarget.id}/documents/text" method="post">
+            <div class="modal__header">
+                <span class="modal__title">テキストを新規作成</span>
+                <button type="button" class="modal__close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal__body">
+                <div class="form-group">
+                    <label class="form-label" for="textDocTitle">タイトル</label>
+                    <input class="input" type="text" id="textDocTitle" name="title" required maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="textDocDescription">概要説明</label>
+                    <textarea class="textarea" id="textDocDescription" name="description" maxlength="1000"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="textDocCategory">カテゴリ</label>
+                    <select class="select" id="textDocCategory" name="category">
+                        <c:forEach var="cat" items="${categoryList}">
+                            <option value="${cat}"><c:out value="${cat.displayLabel}" /></option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="textDocContent">本文（Markdown）</label>
+                    <textarea class="textarea" id="textDocContent" name="content" rows="10" placeholder="# 見出し&#10;Markdown形式で記述できます"></textarea>
+                </div>
+            </div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>キャンセル</button>
+                <button type="submit" class="btn btn-primary">作成する</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.DocumentService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.ProjectService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.document.DocumentCategory;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectStatus;
 
@@ -46,10 +48,12 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final UserService userService;
+    private final DocumentService documentService;
 
-    public ProjectController(ProjectService projectService, UserService userService) {
+    public ProjectController(ProjectService projectService, UserService userService, DocumentService documentService) {
         this.projectService = projectService;
         this.userService = userService;
+        this.documentService = documentService;
     }
 
     /**
@@ -121,6 +125,8 @@ public class ProjectController {
         model.addAttribute(MODEL_KEY_PROJECT_TARGET, project);
         model.addAttribute(MODEL_KEY_STATUS_LIST, ProjectStatus.values());
         model.addAttribute("canManageStatus", project.isOwner(loginUser) || loginUser.isAdmin());
+        model.addAttribute("documentList", documentService.findByProject(project));
+        model.addAttribute("categoryList", DocumentCategory.values());
         return VIEW_PROJECT_DETAIL;
     }
 
