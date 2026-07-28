@@ -26,8 +26,10 @@
                     <tr>
                         <th>タイトル</th>
                         <th>主催者</th>
+                        <th>あなたの立場</th>
                         <th>プロジェクト</th>
                         <th>ステータス</th>
+                        <th>回答状況</th>
                         <th>回答期限</th>
                     </tr>
                 </thead>
@@ -36,11 +38,32 @@
                         <tr>
                             <td><a href="/polls/${poll.id}"><c:out value="${poll.title}" /></a></td>
                             <td><c:out value="${poll.organizer.displayName}" /></td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${poll.organizer.id == currentUserId}">
+                                        <span class="badge badge-primary">主催者</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge badge-neutral">回答者</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                             <td><c:out value="${empty poll.project ? '－' : poll.project.title}" /></td>
                             <td>
                                 <span class="badge ${poll.status == 'CLOSED' ? 'badge-success' : 'badge-warning'}">
                                     <c:out value="${poll.status.displayLabel}" />
                                 </span>
+                            </td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${poll.status == 'CLOSED'}">－</c:when>
+                                    <c:when test="${respondedMap[poll.id]}">
+                                        <span class="badge badge-success">✓ 回答済み</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge badge-danger">未回答</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                             <td><c:out value="${empty poll.responseDeadline ? '－' : poll.responseDeadline}" /></td>
                         </tr>

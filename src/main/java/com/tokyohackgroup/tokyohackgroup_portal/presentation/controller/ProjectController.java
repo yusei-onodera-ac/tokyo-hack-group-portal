@@ -16,13 +16,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.CommentService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.DocumentService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.ProjectService;
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.TaskService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.document.DocumentCategory;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectStatus;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.task.TaskStatus;
 
 /**
  * プロジェクトの検索・作成・詳細表示・ステータス変更・お気に入り管理を制御するコントローラー。
@@ -49,11 +52,16 @@ public class ProjectController {
     private final ProjectService projectService;
     private final UserService userService;
     private final DocumentService documentService;
+    private final TaskService taskService;
+    private final CommentService commentService;
 
-    public ProjectController(ProjectService projectService, UserService userService, DocumentService documentService) {
+    public ProjectController(ProjectService projectService, UserService userService, DocumentService documentService,
+            TaskService taskService, CommentService commentService) {
         this.projectService = projectService;
         this.userService = userService;
         this.documentService = documentService;
+        this.taskService = taskService;
+        this.commentService = commentService;
     }
 
     /**
@@ -127,6 +135,9 @@ public class ProjectController {
         model.addAttribute("canManageStatus", project.isOwner(loginUser) || loginUser.isAdmin());
         model.addAttribute("documentList", documentService.findByProject(project));
         model.addAttribute("categoryList", DocumentCategory.values());
+        model.addAttribute("taskList", taskService.findByProject(project));
+        model.addAttribute("taskStatusList", TaskStatus.values());
+        model.addAttribute("commentList", commentService.findByProject(project));
         return VIEW_PROJECT_DETAIL;
     }
 

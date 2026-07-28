@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.CommentService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.DocumentService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.ProjectService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
@@ -39,10 +40,12 @@ public class DocumentController {
 
     private final DocumentService documentService;
     private final ProjectService projectService;
+    private final CommentService commentService;
 
-    public DocumentController(DocumentService documentService, ProjectService projectService) {
+    public DocumentController(DocumentService documentService, ProjectService projectService, CommentService commentService) {
         this.documentService = documentService;
         this.projectService = projectService;
+        this.commentService = commentService;
     }
 
     @PostMapping("/upload")
@@ -103,6 +106,8 @@ public class DocumentController {
                 model.addAttribute("renderedMarkdown", documentService.renderMarkdown(latestVersion.getTextContent()));
             }
         });
+
+        model.addAttribute("commentList", commentService.findByDocument(document));
 
         return VIEW_DOCUMENT_DETAIL;
     }

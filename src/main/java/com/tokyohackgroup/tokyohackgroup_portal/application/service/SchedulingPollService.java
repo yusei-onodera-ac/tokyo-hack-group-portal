@@ -1,6 +1,7 @@
 package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.calendar.CalendarEvent;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.notification.NotificationType;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.poll.PollAnswer;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.poll.PollCandidate;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.poll.PollResponse;
@@ -35,6 +37,7 @@ public class SchedulingPollService {
     private final UserAccountRepository userAccountRepository;
     private final CalendarService calendarService;
     private final EmailNotificationService emailNotificationService;
+    private final NotificationService notificationService;
 
     public SchedulingPollService(
             SchedulingPollRepository schedulingPollRepository,
@@ -42,13 +45,15 @@ public class SchedulingPollService {
             ProjectRepository projectRepository,
             UserAccountRepository userAccountRepository,
             CalendarService calendarService,
-            EmailNotificationService emailNotificationService) {
+            EmailNotificationService emailNotificationService,
+            NotificationService notificationService) {
         this.schedulingPollRepository = schedulingPollRepository;
         this.pollResponseRepository = pollResponseRepository;
         this.projectRepository = projectRepository;
         this.userAccountRepository = userAccountRepository;
         this.calendarService = calendarService;
         this.emailNotificationService = emailNotificationService;
+        this.notificationService = notificationService;
     }
 
     public List<SchedulingPoll> fetchPollsForUser(UserAccount user) {
@@ -75,6 +80,21 @@ public class SchedulingPollService {
                     .put(response.getUser().getId(), response);
         }
         return matrix;
+    }
+
+    /**
+     * 指定ユーザーが全ての候補日時に回答済みかどうかを判定する（一覧画面での回答状況表示に使用）。
+     */
+    public boolean hasUserRespondedToAll(SchedulingPoll poll, UserAccount user) {
+        if (poll.getCandidates().isEmpty()) {
+            return false;
+        }
+        long respondedCandidateCount = pollResponseRepository.findByPoll(poll).stream()
+                .filter(response -> response.getUser().getId().equals(user.getId()))
+                .map(response -> response.getCandidate().getId())
+                .distinct()
+                .count();
+        return respondedCandidateCount >= poll.getCandidates().size();
     }
 
     /**
@@ -109,13 +129,26 @@ public class SchedulingPollService {
             newPoll.addCandidate(candidateDateTime, order++);
         }
 
+        List<UserAccount> invitees = new ArrayList<>();
         if (inviteeUserIds != null) {
             for (Long inviteeUserId : inviteeUserIds) {
-                userAccountRepository.findById(inviteeUserId).ifPresent(newPoll::addInvitee);
+                userAccountRepository.findById(inviteeUserId).ifPresent(invitee -> {
+                    newPoll.addInvitee(invitee);
+                    invitees.add(invitee);
+                });
             }
         }
 
-        return schedulingPollRepository.save(newPoll);
+        SchedulingPoll savedPoll = schedulingPollRepository.save(newPoll);
+
+        for (UserAccount invitee : invitees) {
+            notificationService.notify(invitee, NotificationType.POLL_OPENED, "日程調整に招待されました: " + title, null, "/polls/" + savedPoll.getId());
+            if (notificationService.isPollOpenedEmailEnabled(invitee)) {
+                emailNotificationService.sendPollOpenedEmail(invitee.getEmailAddress(), invitee.getDisplayName(), title, organizer.getDisplayName());
+            }
+        }
+
+        return savedPoll;
     }
 
     /**
@@ -170,8 +203,26 @@ public class SchedulingPollService {
         schedulingPollRepository.save(poll);
 
         for (UserAccount invitee : inviteeList) {
-            emailNotificationService.sendPollConfirmedEmail(invitee.getEmailAddress(), invitee.getDisplayName(), poll.getTitle(), candidate.getCandidateDateTime());
+            notificationService.notify(invitee, NotificationType.POLL_CONFIRMED, "日程が確定しました: " + poll.getTitle(), null, "/polls/" + poll.getId());
+            if (notificationService.isPollConfirmedEmailEnabled(invitee)) {
+                emailNotificationService.sendPollConfirmedEmail(invitee.getEmailAddress(), invitee.getDisplayName(), poll.getTitle(), candidate.getCandidateDateTime());
+            }
         }
+    }
+
+    /**
+     * 日程調整を削除する。主催者または管理者のみ実行可能。候補日時・回答も連動して削除される。
+     */
+    @Transactional
+    public void deletePoll(Long pollId, UserAccount actingUser) {
+        SchedulingPoll poll = schedulingPollRepository.findById(pollId)
+                .orElseThrow(() -> new IllegalArgumentException("指定された日程調整が見つかりません。ID: " + pollId));
+
+        if (!poll.isOrganizer(actingUser) && !actingUser.isAdmin()) {
+            throw new IllegalStateException("この日程調整を削除する権限がありません。");
+        }
+
+        schedulingPollRepository.delete(poll);
     }
 
     /**

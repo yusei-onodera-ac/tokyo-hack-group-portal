@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <p class="mb-0"><a href="/projects/${projectTarget.id}">← <c:out value="${projectTarget.title}" /> へ戻る</a></p>
@@ -79,6 +80,35 @@
             </c:forEach>
         </tbody>
     </table>
+</div>
+
+<h2 class="h2 mt-5">コメント</h2>
+<div class="card card-pad mt-2">
+    <c:if test="${empty commentList}">
+        <p class="text-muted">まだコメントはありません。</p>
+    </c:if>
+    <c:forEach var="comment" items="${commentList}">
+        <div class="comment-item">
+            <span class="avatar avatar-sm"><c:out value="${fn:substring(comment.author.displayName, 0, 1)}" /></span>
+            <div class="comment-item__body">
+                <strong><c:out value="${comment.author.displayName}" /></strong>
+                <span class="text-muted text-sm"> ・ <c:out value="${comment.createdAt}" /></span>
+                <p class="comment-item__content"><c:out value="${comment.content}" /></p>
+                <c:if test="${comment.author.id == sessionScope.loginUser.id || sessionScope.loginUser.admin}">
+                    <form action="/projects/${projectTarget.id}/documents/${documentTarget.id}/comments/${comment.id}/delete" method="post" onsubmit="return confirm('コメントを削除しますか？');">
+                        <button type="submit" class="btn btn-sm btn-ghost">削除</button>
+                    </form>
+                </c:if>
+            </div>
+        </div>
+    </c:forEach>
+
+    <form action="/projects/${projectTarget.id}/documents/${documentTarget.id}/comments" method="post" class="mt-4">
+        <div class="form-group">
+            <textarea class="textarea" name="content" rows="3" placeholder="コメントを入力..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">投稿する</button>
+    </form>
 </div>
 
 <%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

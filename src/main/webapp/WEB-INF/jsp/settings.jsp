@@ -71,4 +71,33 @@
     </form>
 </div>
 
+<div class="card card-pad mt-4" style="max-width: 480px;">
+    <h2 class="h2 mb-0">通知設定</h2>
+    <p class="text-muted text-sm mt-2">メールで受け取る通知を選択できます。アプリ内の通知ベルには常にすべて届きます。</p>
+    <c:if test="${not empty notificationMessage}">
+        <div class="alert alert-success mt-2"><c:out value="${notificationMessage}" /></div>
+    </c:if>
+    <form action="/settings/notifications" method="post" class="mt-4">
+        <div class="form-group">
+            <label class="checkbox-row">
+                <input type="checkbox" name="noticeEmailEnabled" value="true" ${notificationPreference.noticeEmailEnabled ? 'checked' : ''}>
+                <span>お知らせが投稿されたときにメールで通知する</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label class="checkbox-row">
+                <input type="checkbox" name="pollOpenedEmailEnabled" value="true" ${notificationPreference.pollOpenedEmailEnabled ? 'checked' : ''}>
+                <span>日程調整に招待されたときにメールで通知する</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label class="checkbox-row">
+                <input type="checkbox" name="pollConfirmedEmailEnabled" value="true" ${notificationPreference.pollConfirmedEmailEnabled ? 'checked' : ''}>
+                <span>日程調整の日時が確定したときにメールで通知する</span>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary">通知設定を保存する</button>
+    </form>
+</div>
+
 <%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

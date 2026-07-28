@@ -35,6 +35,9 @@ public class EmailNotificationService {
     /** 日程調整確定メール件名の接頭辞 */
     private static final String POLL_CONFIRMED_SUBJECT_PREFIX = "【日程確定】";
 
+    /** 日程調整開始メール件名の接頭辞 */
+    private static final String POLL_OPENED_SUBJECT_PREFIX = "【日程調整】";
+
     private static final DateTimeFormatter POLL_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm");
 
     private final JavaMailSender javaMailSender;
@@ -105,6 +108,30 @@ public class EmailNotificationService {
                 + "メールアドレス: " + targetEmail + "\n"
                 + "仮パスワード: " + temporaryPassword + "\n\n"
                 + "ログイン後、マイページから速やかにパスワードを変更してください。");
+
+        try {
+            javaMailSender.send(message);
+        } catch (Exception exception) {
+            System.err.println("メール送信処理をスキップしました: " + exception.getMessage());
+        }
+    }
+
+    /**
+     * 日程調整の開始（招待）時に、招待者へ通知する。
+     *
+     * @param targetEmail       宛先メールアドレス
+     * @param displayName       宛先ユーザーの表示名
+     * @param pollTitle         日程調整のタイトル
+     * @param organizerName     主催者の表示名
+     */
+    @Async
+    public void sendPollOpenedEmail(String targetEmail, String displayName, String pollTitle, String organizerName) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setTo(targetEmail);
+        message.setSubject(POLL_OPENED_SUBJECT_PREFIX + pollTitle);
+        message.setText(displayName + " 様\n\n" + organizerName + " さんから日程調整「" + pollTitle + "」に招待されました。\n"
+                + "ポータルサイトから候補日時への回答をお願いします。");
 
         try {
             javaMailSender.send(message);

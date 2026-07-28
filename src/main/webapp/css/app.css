@@ -451,6 +451,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .table tbody tr:last-child td { border-bottom: none; }
 .table tbody tr.is-best-candidate { background: var(--color-success-soft); }
 .table tbody tr.is-best-candidate td:first-child { font-weight: 800; }
+.table .is-you-column { background: var(--color-primary-soft); }
 .table td.is-numeric { text-align: right; }
 .table .cell-actions { display: flex; gap: var(--space-2); }
 
@@ -636,6 +637,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .cal-month-grid { grid-template-columns: repeat(7, minmax(36px, 1fr)); font-size: 0.75rem; }
   .cal-day-cell { min-height: 64px; padding: var(--space-1); }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Comments                                                                  */
+/* ---------------------------------------------------------------------- */
+.comment-item { display: flex; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+.comment-item:last-child { border-bottom: none; }
+.comment-item__body { flex: 1; min-width: 0; }
+.comment-item__content { white-space: pre-wrap; margin-top: var(--space-1); }
 
 /* ---------------------------------------------------------------------- */
 /* Markdown rendered content                                                */
