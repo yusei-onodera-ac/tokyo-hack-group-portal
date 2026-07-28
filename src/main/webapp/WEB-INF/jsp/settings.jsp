@@ -14,7 +14,7 @@
 <div class="grid grid-2">
     <div class="card card-pad">
         <h2 class="h2 mb-0">登録情報</h2>
-        <div class="table-wrap mt-4">
+        <div class="table-wrap table-wrap--keyvalue mt-4">
             <table class="table">
                 <tr>
                     <th>メールアドレス</th>

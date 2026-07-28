@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <p class="mb-0"><a href="/projects">← プロジェクト一覧へ戻る</a></p>
@@ -30,17 +31,39 @@
                 <c:choose><c:when test="${projectTarget['public']}">公開</c:when><c:otherwise>非公開</c:otherwise></c:choose>
             </span>
         </div>
-        <p class="text-muted">作成者: <c:out value="${projectTarget.createdBy.displayName}" /> ／ 最終更新: <c:out value="${projectTarget.updatedAt}" /></p>
+        <p class="text-muted">作成者: <c:out value="${projectTarget.createdBy.displayName}" /> ／ 最終更新: ${df:formatDateTime(projectTarget.updatedAt)}</p>
     </div>
     <div class="page-header__actions">
         <a class="btn btn-secondary" href="/calendar?projectId=${projectTarget.id}">📅 このプロジェクトのカレンダー</a>
+        <c:if test="${canManageStatus}">
+            <form action="/projects/${projectTarget.id}/delete" method="post" onsubmit="return confirm('このプロジェクトを削除しますか？タスク・ドキュメント・コメント・日程調整などすべての関連データが削除され、元に戻せません。');">
+                <button type="submit" class="btn btn-danger">プロジェクトを削除</button>
+            </form>
+        </c:if>
     </div>
 </div>
 
 <div class="grid grid-2">
     <div class="card card-pad">
         <h2 class="h2 mb-0">概要</h2>
-        <p class="mt-2"><c:out value="${projectTarget.description}" /></p>
+        <c:choose>
+            <c:when test="${canManageStatus}">
+                <form action="/projects/${projectTarget.id}/edit" method="post" class="mt-2">
+                    <div class="form-group">
+                        <label class="form-label" for="editTitle">タイトル</label>
+                        <input class="input" type="text" id="editTitle" name="title" value="<c:out value='${projectTarget.title}'/>" required maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editDescription">概要</label>
+                        <textarea class="textarea" id="editDescription" name="description" maxlength="1000"><c:out value="${projectTarget.description}" /></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存する</button>
+                </form>
+            </c:when>
+            <c:otherwise>
+                <p class="mt-2"><c:out value="${projectTarget.description}" /></p>
+            </c:otherwise>
+        </c:choose>
     </div>
 
     <c:if test="${canManageStatus}">
@@ -82,12 +105,13 @@
                 <th>表示名</th>
                 <th>プロジェクト内の役割</th>
                 <th>システム権限</th>
+                <c:if test="${canManageStatus}"><th>操作</th></c:if>
             </tr>
         </thead>
         <tbody>
             <c:forEach var="member" items="${projectTarget.members}">
                 <tr>
-                    <td class="flex items-center gap-2">
+                    <td class="flex items-center gap-2" data-label="表示名">
                         <span class="avatar avatar-sm">
                             <c:choose>
                                 <c:when test="${not empty member.user.avatarStoredFileName}">
@@ -100,15 +124,38 @@
                         </span>
                         <c:out value="${member.user.displayName}" />
                     </td>
-                    <td>
+                    <td data-label="プロジェクト内の役割">
                         <span class="badge ${member.role == 'OWNER' ? 'badge-primary' : 'badge-neutral'}"><c:out value="${member.role.displayLabel}" /></span>
                     </td>
-                    <td><c:out value="${member.user.role.displayLabel}" /></td>
+                    <td data-label="システム権限"><c:out value="${member.user.role.displayLabel}" /></td>
+                    <c:if test="${canManageStatus}">
+                        <td data-label="操作">
+                            <form action="/projects/${projectTarget.id}/members/${member.user.id}/delete" method="post" onsubmit="return confirm('このメンバーを除外しますか？');">
+                                <button type="submit" class="btn btn-sm btn-danger">除外</button>
+                            </form>
+                        </td>
+                    </c:if>
                 </tr>
             </c:forEach>
         </tbody>
     </table>
 </div>
+
+<c:if test="${canManageStatus}">
+    <div class="card card-pad mt-2" style="max-width: 480px;">
+        <form action="/projects/${projectTarget.id}/members" method="post" class="form-row" style="align-items:flex-end;">
+            <div class="form-group">
+                <label class="form-label" for="addMemberUserId">メンバーを追加</label>
+                <select class="select" id="addMemberUserId" name="userId" required>
+                    <c:forEach var="candidate" items="${addableUserList}">
+                        <option value="${candidate.id}"><c:out value="${candidate.displayName}" /></option>
+                    </c:forEach>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" ${empty addableUserList ? 'disabled' : ''}>追加する</button>
+        </form>
+    </div>
+</c:if>
 
 <div class="page-header mt-5">
     <div class="page-header__title">
@@ -141,13 +188,13 @@
                 <tbody>
                     <c:forEach var="task" items="${taskList}">
                         <tr>
-                            <td>
+                            <td class="cell-stack" data-label="タイトル">
                                 <strong><c:out value="${task.title}" /></strong>
                                 <c:if test="${not empty task.description}"><br><span class="text-muted text-sm"><c:out value="${task.description}" /></span></c:if>
                             </td>
-                            <td><c:out value="${empty task.assignee ? '未割当' : task.assignee.displayName}" /></td>
-                            <td><c:out value="${empty task.dueDate ? '－' : task.dueDate}" /></td>
-                            <td>
+                            <td data-label="担当者"><c:out value="${empty task.assignee ? '未割当' : task.assignee.displayName}" /></td>
+                            <td data-label="期限"><c:out value="${empty task.dueDate ? '－' : task.dueDate}" /></td>
+                            <td data-label="ステータス">
                                 <form action="/projects/${projectTarget.id}/tasks/${task.id}/status" method="post">
                                     <select class="select" name="status" onchange="this.form.submit()" style="width:auto;">
                                         <c:forEach var="st" items="${taskStatusList}">
@@ -156,7 +203,7 @@
                                     </select>
                                 </form>
                             </td>
-                            <td>
+                            <td data-label="操作">
                                 <form action="/projects/${projectTarget.id}/tasks/${task.id}/delete" method="post" onsubmit="return confirm('このタスクを削除しますか？');">
                                     <button type="submit" class="btn btn-sm btn-danger">削除</button>
                                 </form>
@@ -242,12 +289,12 @@
                 <tbody>
                     <c:forEach var="doc" items="${documentList}">
                         <tr>
-                            <td><a href="/projects/${projectTarget.id}/documents/${doc.id}"><c:out value="${doc.title}" /></a></td>
-                            <td><span class="badge badge-neutral"><c:out value="${doc.documentType.displayLabel}" /></span></td>
-                            <td><c:out value="${doc.category.displayLabel}" /></td>
-                            <td>v<c:out value="${doc.latestVersion.get().versionNumber}" /></td>
-                            <td><c:out value="${doc.createdBy.displayName}" /></td>
-                            <td><c:out value="${doc.updatedAt}" /></td>
+                            <td data-label="タイトル"><a href="/projects/${projectTarget.id}/documents/${doc.id}"><c:out value="${doc.title}" /></a></td>
+                            <td data-label="種別"><span class="badge badge-neutral"><c:out value="${doc.documentType.displayLabel}" /></span></td>
+                            <td data-label="カテゴリ"><c:out value="${doc.category.displayLabel}" /></td>
+                            <td data-label="最新バージョン">v<c:out value="${doc.latestVersion.get().versionNumber}" /></td>
+                            <td data-label="作成者"><c:out value="${doc.createdBy.displayName}" /></td>
+                            <td data-label="更新日時">${df:formatDateTime(doc.updatedAt)}</td>
                         </tr>
                     </c:forEach>
                 </tbody>
@@ -311,11 +358,14 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="textDocCategory">カテゴリ</label>
-                    <select class="select" id="textDocCategory" name="category">
-                        <c:forEach var="cat" items="${categoryList}">
-                            <option value="${cat}"><c:out value="${cat.displayLabel}" /></option>
-                        </c:forEach>
-                    </select>
+                    <div class="flex items-center gap-2">
+                        <select class="select" id="textDocCategory" name="category">
+                            <c:forEach var="cat" items="${categoryList}">
+                                <option value="${cat}"><c:out value="${cat.displayLabel}" /></option>
+                            </c:forEach>
+                        </select>
+                        <button type="button" class="btn btn-secondary" data-use-template-for="textDocCategory" data-template-target="textDocContent">テンプレートを使用</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="textDocContent">本文（Markdown）</label>
@@ -349,7 +399,7 @@
             </span>
             <div class="comment-item__body">
                 <strong><c:out value="${comment.author.displayName}" /></strong>
-                <span class="text-muted text-sm"> ・ <c:out value="${comment.createdAt}" /></span>
+                <span class="text-muted text-sm"> ・ ${df:formatDateTime(comment.createdAt)}</span>
                 <p class="comment-item__content"><c:out value="${comment.content}" /></p>
                 <c:if test="${comment.author.id == sessionScope.loginUser.id || sessionScope.loginUser.admin}">
                     <form action="/projects/${projectTarget.id}/comments/${comment.id}/delete" method="post" onsubmit="return confirm('コメントを削除しますか？');">
@@ -368,4 +418,5 @@
     </form>
 </div>
 
+<script src="/js/document-templates.js"></script>
 <%@ include file="/WEB-INF/jsp/common/footer.jsp" %>

@@ -117,6 +117,19 @@ public class DocumentService {
     }
 
     /**
+     * プロジェクトに紐づく全ドキュメントを、バージョン・ディスク上のファイル実体ごと削除する。
+     * プロジェクト削除時の内部カスケード処理専用。呼び出し元で削除権限を検証済みであることを前提とする。
+     */
+    @Transactional
+    public void deleteDocumentsForProject(Project project) {
+        List<Document> documents = documentRepository.findByProjectOrderByUpdatedAtDesc(project);
+        for (Document document : documents) {
+            fileStorageService.deleteDocumentFiles(document.getId());
+            documentRepository.delete(document);
+        }
+    }
+
+    /**
      * Markdown本文を安全なHTMLへ変換する。raw HTMLはエスケープしXSSを防止する。
      */
     public String renderMarkdown(String markdownContent) {

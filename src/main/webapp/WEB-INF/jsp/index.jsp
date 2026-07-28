@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <c:set var="pageTitle" value="ホーム" scope="request" />
 <c:set var="activeNav" value="" scope="request" />
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
@@ -73,7 +74,7 @@
                     <span style="font-size:1.2rem;"><c:out value="${item.icon}" /></span>
                     <div class="comment-item__body">
                         <a href="<c:out value='${item.linkUrl}'/>"><c:out value="${item.message}" /></a>
-                        <div class="text-muted text-sm"><c:out value="${item.occurredAt}" /></div>
+                        <div class="text-muted text-sm">${df:formatDateTime(item.occurredAt)}</div>
                     </div>
                 </div>
             </c:forEach>

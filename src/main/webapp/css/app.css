@@ -428,6 +428,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .avatar-lg { width: 72px; height: 72px; font-size: 1.6rem; }
 .avatar-upload {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-4, 1rem);
 }
@@ -451,7 +452,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
-.table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.table { width: 100%; border-collapse: collapse; }
 .table th, .table td {
   padding: var(--space-3) var(--space-4);
   text-align: left;
@@ -473,6 +474,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .table .is-you-column { background: var(--color-primary-soft); }
 .table td.is-numeric { text-align: right; }
 .table .cell-actions { display: flex; gap: var(--space-2); }
+
+/* 候補×招待者のような行列型テーブルはカード化せず、横スクロールのまま維持する */
+.table-wrap--matrix { position: relative; }
+.table-wrap--matrix .table { min-width: 480px; }
 
 /* ---------------------------------------------------------------------- */
 /* Forms                                                                    */
@@ -648,8 +653,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-1);
 }
-.cal-list-time { font-size: 0.8rem; color: var(--color-text-muted); font-weight: 700; width: 3.5em; }
-.cal-list-title { cursor: pointer; font-weight: 600; }
+.cal-list-time { font-size: 0.8rem; color: var(--color-text-muted); font-weight: 700; width: 3.5em; flex-shrink: 0; }
+.cal-list-title { cursor: pointer; font-weight: 600; flex: 1; min-width: 0; overflow-wrap: break-word; }
 .cal-list-title:hover { text-decoration: underline; }
 
 @media (max-width: 700px) {
@@ -819,4 +824,78 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 560px) {
   .grid-projects, .grid-menu, .grid-2 { grid-template-columns: 1fr; }
   .card-pad, .card-body { padding: var(--space-4); }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay { padding: var(--space-2); }
+  .modal__header, .modal__body, .modal__footer {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+  .modal__header { padding-top: var(--space-4); }
+  .modal__body { padding-bottom: var(--space-4); }
+  .form-row > .form-group { min-width: 100%; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Responsive tables — カード型リストへの変換                              */
+/* 対象の <td> には data-label="列名" を付与しておくこと。                  */
+/* 候補×招待者の行列表（.table-wrap--matrix）は対象外とし、横スクロールを維持。 */
+/* ---------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) {
+    overflow-x: visible;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table {
+    display: block;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table thead {
+    display: none;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table tbody {
+    display: block;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table tbody tr {
+    display: block;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px dashed var(--color-border);
+    text-align: right;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table td:last-child {
+    border-bottom: none;
+  }
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-faint);
+    text-align: left;
+    flex-shrink: 0;
+  }
+  /* 値側が長文・複数行になりうるセル（本文・詳細等）は縦積みに切り替える */
+  .table-wrap:not(.table-wrap--matrix):not(.table-wrap--keyvalue) .table td.cell-stack {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
 }

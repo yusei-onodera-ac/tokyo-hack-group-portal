@@ -17,4 +17,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findByCategoryOrderByCreatedAtDesc(AuditLogCategory category, Pageable pageable);
 
     Page<AuditLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    void deleteByCategory(AuditLogCategory category);
 }

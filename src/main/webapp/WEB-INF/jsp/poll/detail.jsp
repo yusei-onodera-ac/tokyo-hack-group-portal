@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <p class="mb-0"><a href="/polls">← 日程調整一覧へ戻る</a></p>
@@ -29,7 +30,7 @@
         <p class="text-muted text-sm">
             主催者: <c:out value="${pollTarget.organizer.displayName}" />
             <c:if test="${not empty pollTarget.project}"> ／ プロジェクト: <c:out value="${pollTarget.project.title}" /></c:if>
-            <c:if test="${not empty pollTarget.responseDeadline}"> ／ 回答期限: <c:out value="${pollTarget.responseDeadline}" /></c:if>
+            <c:if test="${not empty pollTarget.responseDeadline}"> ／ 回答期限: ${df:formatDateTime(pollTarget.responseDeadline)}</c:if>
         </p>
     </div>
     <c:if test="${isOrganizer}">
@@ -43,7 +44,7 @@
 
 <c:if test="${pollTarget.status == 'CLOSED'}">
     <div class="alert alert-success">
-        確定日時: <c:out value="${pollTarget.confirmedCandidate.candidateDateTime}" />
+        確定日時: ${df:formatDateTime(pollTarget.confirmedCandidate.candidateDateTime)}
     </div>
 </c:if>
 
@@ -62,8 +63,8 @@
             <tbody>
                 <c:forEach var="candidate" items="${pollTarget.candidates}">
                     <tr>
-                        <td><c:out value="${candidate.candidateDateTime}" /></td>
-                        <td>
+                        <td data-label="候補日時">${df:formatDateTime(candidate.candidateDateTime)}</td>
+                        <td data-label="あなたの回答">
                             <div class="flex gap-2" data-vote-buttons="${candidate.id}">
                                 <c:forEach var="ans" items="${answerList}">
                                     <button type="button" class="btn btn-sm btn-secondary" data-answer="${ans}">
@@ -72,7 +73,7 @@
                                 </c:forEach>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="コメント">
                             <input class="input" type="text" placeholder="コメント（任意）" data-comment-input="${candidate.id}" style="width: 220px;">
                         </td>
                     </tr>
@@ -84,7 +85,7 @@
 
 <h2 class="h2 mt-5">回答状況一覧</h2>
 <p class="text-muted text-sm">各候補の集計（○参加可能／△条件付き／×不可）は自動更新されます。最も回答が集まっている候補は緑色でハイライトされます。</p>
-<div class="table-wrap mt-2">
+<div class="table-wrap table-wrap--matrix mt-2">
     <table class="table" id="poll-matrix-table">
         <thead>
             <tr>
@@ -104,7 +105,7 @@
         <tbody>
             <c:forEach var="candidate" items="${pollTarget.candidates}">
                 <tr data-candidate-row="${candidate.id}">
-                    <td><c:out value="${candidate.candidateDateTime}" /></td>
+                    <td>${df:formatDateTime(candidate.candidateDateTime)}</td>
                     <td data-count-candidate="${candidate.id}" class="text-muted text-sm">集計中…</td>
                     <c:forEach var="invitee" items="${pollTarget.invitees}">
                         <td class="is-numeric ${invitee.id == currentUserId ? 'is-you-column' : ''}" data-cell-candidate="${candidate.id}" data-cell-user="${invitee.id}">－</td>

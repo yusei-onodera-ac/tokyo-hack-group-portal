@@ -95,6 +95,27 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * 指定ドキュメントの保存ディレクトリ（全バージョンのファイル実体）をディスクから削除する。
+     */
+    public void deleteDocumentFiles(Long documentId) {
+        Path documentDirectory = resolveDocumentDirectory(documentId);
+        if (!Files.exists(documentDirectory)) {
+            return;
+        }
+        try (var pathStream = Files.walk(documentDirectory)) {
+            pathStream.sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException deleteFailure) {
+                    throw new UncheckedIOException("ファイルの削除に失敗しました。", deleteFailure);
+                }
+            });
+        } catch (IOException walkFailure) {
+            throw new UncheckedIOException("ディレクトリの走査に失敗しました。", walkFailure);
+        }
+    }
+
     private Path resolveDocumentDirectory(Long documentId) {
         return documentsRootDirectory.resolve(String.valueOf(documentId)).normalize();
     }

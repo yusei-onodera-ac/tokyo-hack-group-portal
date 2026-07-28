@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns="https://jakarta.ee/xml/ns/jakartaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-jsptaglibrary_3_0.xsd"
+        version="3.0">
+    <description>Tokyo Hack Group Portal 独自EL関数（日時整形）</description>
+    <tlib-version>1.0</tlib-version>
+    <short-name>df</short-name>
+    <uri>/WEB-INF/tld/functions.tld</uri>
+
+    <function>
+        <name>formatDateTime</name>
+        <function-class>com.tokyohackgroup.tokyohackgroup_portal.presentation.util.DateTimeFormatFunctions</function-class>
+        <function-signature>java.lang.String formatDateTime(java.time.LocalDateTime)</function-signature>
+    </function>
+
+    <function>
+        <name>formatDate</name>
+        <function-class>com.tokyohackgroup.tokyohackgroup_portal.presentation.util.DateTimeFormatFunctions</function-class>
+        <function-signature>java.lang.String formatDate(java.time.LocalDate)</function-signature>
+    </function>
+</taglib>

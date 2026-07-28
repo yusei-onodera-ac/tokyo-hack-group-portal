@@ -150,11 +150,33 @@ public class Project {
     }
 
     /**
-     * プロジェクトへ役割付きでメンバーを追加する。
+     * プロジェクトへ役割付きでメンバーを追加する。既に参加済みのユーザーは無視する（重複追加を防止）。
      */
     public void addMember(UserAccount user, ProjectMemberRole role) {
+        if (isMember(user)) {
+            return;
+        }
         ProjectMember newMember = new ProjectMember(this, user, role);
         this.members.add(newMember);
+    }
+
+    /**
+     * 指定ユーザーをメンバーから除外する。プロジェクトに残る唯一のOWNERは除外できない。
+     */
+    public void removeMember(Long userId) {
+        ProjectMember targetMember = this.members.stream()
+                .filter(member -> member.getUser().getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("指定されたユーザーはこのプロジェクトのメンバーではありません。"));
+
+        if (ProjectMemberRole.OWNER.equals(targetMember.getRole())) {
+            long ownerCount = this.members.stream().filter(member -> ProjectMemberRole.OWNER.equals(member.getRole())).count();
+            if (ownerCount <= 1) {
+                throw new IllegalStateException("プロジェクトに残る唯一のオーナーは除外できません。");
+            }
+        }
+
+        this.members.remove(targetMember);
     }
 
     /**
@@ -212,6 +234,15 @@ public class Project {
      */
     public void changeStatus(ProjectStatus newStatus) {
         this.status = newStatus;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * タイトル・概要を変更する。
+     */
+    public void updateDetails(String newTitle, String newDescription) {
+        this.title = newTitle;
+        this.description = newDescription;
         this.updatedAt = LocalDateTime.now();
     }
 

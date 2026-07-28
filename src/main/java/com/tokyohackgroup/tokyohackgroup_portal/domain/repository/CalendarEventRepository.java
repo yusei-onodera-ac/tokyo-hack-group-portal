@@ -10,12 +10,15 @@ import org.springframework.stereotype.Repository;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.calendar.CalendarEvent;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 
 /**
  * カレンダーイベント（calendar_eventsテーブル）に対するデータアクセスを担うリポジトリ。
  */
 @Repository
 public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Long> {
+
+    List<CalendarEvent> findByProject(Project project);
 
     /**
      * 指定期間と重なるイベントを、閲覧権限の範囲で取得する。

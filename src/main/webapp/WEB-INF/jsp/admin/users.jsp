@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <div class="page-header">
@@ -44,9 +45,9 @@
         <tbody>
             <c:forEach var="targetUser" items="${userPage.content}">
                 <tr>
-                    <td><c:out value="${targetUser.displayName}" /></td>
-                    <td><c:out value="${targetUser.emailAddress}" /></td>
-                    <td>
+                    <td data-label="表示名"><c:out value="${targetUser.displayName}" /></td>
+                    <td data-label="メールアドレス"><c:out value="${targetUser.emailAddress}" /></td>
+                    <td data-label="権限">
                         <c:choose>
                             <c:when test="${targetUser.id == sessionScope.loginUser.id}">
                                 <span class="badge badge-primary">自分</span>
@@ -63,7 +64,7 @@
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td>
+                    <td data-label="ステータス">
                         <c:choose>
                             <c:when test="${targetUser.id == sessionScope.loginUser.id}">
                                 <span class="badge badge-success">有効</span>
@@ -82,7 +83,7 @@
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td><c:out value="${targetUser.createdAt}" /></td>
+                    <td data-label="登録日">${df:formatDateTime(targetUser.createdAt)}</td>
                 </tr>
             </c:forEach>
         </tbody>

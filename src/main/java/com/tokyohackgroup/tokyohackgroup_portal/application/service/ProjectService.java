@@ -17,11 +17,12 @@ import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectMemberRole;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectStatus;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.CommentRepository;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.ProjectRepository;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.UserAccountRepository;
 
 /**
- * プロジェクトの検索・作成・ステータス変更・お気に入り管理を統括するアプリケーションサービス。
+ * プロジェクトの検索・作成・編集・削除・ステータス変更・メンバー管理・お気に入り管理を統括するアプリケーションサービス。
  */
 @Service
 @Transactional(readOnly = true)
@@ -33,11 +34,29 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userAccountRepository;
     private final ImageStorageService imageStorageService;
+    private final CommentRepository commentRepository;
+    private final SchedulingPollService schedulingPollService;
+    private final TaskService taskService;
+    private final DocumentService documentService;
+    private final CalendarService calendarService;
 
-    public ProjectService(ProjectRepository projectRepository, UserAccountRepository userAccountRepository, ImageStorageService imageStorageService) {
+    public ProjectService(
+            ProjectRepository projectRepository,
+            UserAccountRepository userAccountRepository,
+            ImageStorageService imageStorageService,
+            CommentRepository commentRepository,
+            SchedulingPollService schedulingPollService,
+            TaskService taskService,
+            DocumentService documentService,
+            CalendarService calendarService) {
         this.projectRepository = projectRepository;
         this.userAccountRepository = userAccountRepository;
         this.imageStorageService = imageStorageService;
+        this.commentRepository = commentRepository;
+        this.schedulingPollService = schedulingPollService;
+        this.taskService = taskService;
+        this.documentService = documentService;
+        this.calendarService = calendarService;
     }
 
     /**
@@ -128,6 +147,96 @@ public class ProjectService {
 
         targetProject.changeStatus(newStatus);
         projectRepository.save(targetProject);
+    }
+
+    /**
+     * プロジェクトのタイトル・概要を変更する。OWNER または管理者のみ実行可能。
+     */
+    @Transactional
+    public void updateDetails(Long projectId, String newTitle, String newDescription, UserAccount actingUser) {
+        Project targetProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたプロジェクトが見つかりません。ID: " + projectId));
+
+        if (!targetProject.isOwner(actingUser) && !actingUser.isAdmin()) {
+            throw new IllegalStateException("このプロジェクトを編集する権限がありません。");
+        }
+
+        targetProject.updateDetails(newTitle, newDescription);
+        projectRepository.save(targetProject);
+    }
+
+    /**
+     * メンバーを追加する。OWNER または管理者のみ実行可能。
+     */
+    @Transactional
+    public void addMember(Long projectId, Long userId, UserAccount actingUser) {
+        Project targetProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたプロジェクトが見つかりません。ID: " + projectId));
+
+        if (!targetProject.isOwner(actingUser) && !actingUser.isAdmin()) {
+            throw new IllegalStateException("メンバーを追加する権限がありません。");
+        }
+
+        UserAccount newMember = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたユーザーが見つかりません。ID: " + userId));
+
+        targetProject.addMember(newMember, ProjectMemberRole.MEMBER);
+        projectRepository.save(targetProject);
+    }
+
+    /**
+     * メンバーを除外する。OWNER または管理者のみ実行可能。唯一のOWNERは除外できない。
+     */
+    @Transactional
+    public void removeMember(Long projectId, Long userId, UserAccount actingUser) {
+        Project targetProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたプロジェクトが見つかりません。ID: " + projectId));
+
+        if (!targetProject.isOwner(actingUser) && !actingUser.isAdmin()) {
+            throw new IllegalStateException("メンバーを除外する権限がありません。");
+        }
+
+        targetProject.removeMember(userId);
+        projectRepository.save(targetProject);
+    }
+
+    /**
+     * プロジェクトを削除する。OWNER または管理者のみ実行可能。
+     *
+     * <p>タスク・カレンダーイベント・日程調整・ドキュメント（ディスク上のファイル含む）・コメント・
+     * メンバー・お気に入りなど、関連する全データを連動して削除する。</p>
+     */
+    @Transactional
+    public void deleteProject(Long projectId, UserAccount actingUser) {
+        Project targetProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたプロジェクトが見つかりません。ID: " + projectId));
+
+        if (!targetProject.isOwner(actingUser) && !actingUser.isAdmin()) {
+            throw new IllegalStateException("このプロジェクトを削除する権限がありません。");
+        }
+
+        // コメント（プロジェクト直付け分 + ドキュメント付け分）を先に削除する
+        commentRepository.deleteAll(commentRepository.findByProjectOrderByCreatedAtAsc(targetProject));
+        for (var document : documentService.findByProject(targetProject)) {
+            commentRepository.deleteAll(commentRepository.findByDocumentOrderByCreatedAtAsc(document));
+        }
+
+        // タスク（連動するカレンダーイベントも一緒に削除される）
+        for (var task : taskService.findByProject(targetProject)) {
+            taskService.deleteTask(task.getId(), actingUser);
+        }
+
+        // 日程調整（候補日時・回答・招待も連動して削除される）
+        schedulingPollService.deletePollsForProject(targetProject);
+
+        // 残りのカレンダーイベント（会議・マイルストーン等）
+        calendarService.deleteEventsForProject(targetProject);
+
+        // ドキュメント（バージョン情報・ディスク上のファイル実体も削除される）
+        documentService.deleteDocumentsForProject(targetProject);
+
+        // プロジェクト本体（メンバー・お気に入りは自動的にカスケード削除される）
+        projectRepository.delete(targetProject);
     }
 
     /**

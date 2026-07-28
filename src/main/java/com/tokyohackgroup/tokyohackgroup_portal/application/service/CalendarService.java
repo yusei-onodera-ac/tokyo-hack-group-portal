@@ -154,6 +154,15 @@ public class CalendarService {
         calendarEventRepository.findById(eventId).ifPresent(calendarEventRepository::delete);
     }
 
+    /**
+     * プロジェクトに紐づく残りの全カレンダーイベントを削除する。プロジェクト削除時の内部カスケード処理専用。
+     * タスク連動イベントは先にタスク削除側で処理されている前提で、会議・マイルストーン等の残りを掃除する。
+     */
+    @Transactional
+    public void deleteEventsForProject(Project project) {
+        calendarEventRepository.deleteAll(calendarEventRepository.findByProject(project));
+    }
+
     private CalendarEvent findEventOrThrow(Long eventId) {
         Optional<CalendarEvent> eventOptional = calendarEventRepository.findById(eventId);
         return eventOptional.orElseThrow(() -> new IllegalArgumentException("指定されたイベントが見つかりません。ID: " + eventId));

@@ -92,6 +92,18 @@ public class AuditLogService {
         return csvBuilder.toString();
     }
 
+    /**
+     * ログを一括削除する。categoryFilter が null の場合は全件削除する。
+     */
+    @Transactional
+    public void deleteLogs(AuditLogCategory categoryFilter) {
+        if (categoryFilter == null) {
+            auditLogRepository.deleteAll();
+        } else {
+            auditLogRepository.deleteByCategory(categoryFilter);
+        }
+    }
+
     private String escapeCsvField(String rawValue) {
         if (rawValue == null) {
             return "";

@@ -222,6 +222,27 @@ public class SchedulingPollService {
             throw new IllegalStateException("この日程調整を削除する権限がありません。");
         }
 
+        deletePollCascade(poll);
+    }
+
+    /**
+     * プロジェクトに紐づく全ての日程調整を削除する。プロジェクト削除時の内部カスケード処理専用で、権限チェックは行わない。
+     */
+    @Transactional
+    public void deletePollsForProject(Project project) {
+        for (SchedulingPoll poll : schedulingPollRepository.findByProject(project)) {
+            deletePollCascade(poll);
+        }
+    }
+
+    /**
+     * 回答（PollResponse）を候補日時の削除前に明示的に削除してから日程調整を削除する。
+     *
+     * <p>候補日時（{@code cascade = CascadeType.ALL}）経由の多段カスケードに任せると、回答の遅延コレクションが
+     * 未初期化のまま削除処理が実行され外部キー制約違反となる場合があるため、明示的な削除順序で確実に処理する。</p>
+     */
+    private void deletePollCascade(SchedulingPoll poll) {
+        pollResponseRepository.deleteAll(pollResponseRepository.findByPoll(poll));
         schedulingPollRepository.delete(poll);
     }
 
