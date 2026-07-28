@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.NotificationService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
@@ -29,6 +30,8 @@ public class ProfileController {
     private static final String MODEL_KEY_PASSWORD_MESSAGE = "passwordMessage";
     private static final String MODEL_KEY_PASSWORD_ERROR = "passwordErrorMessage";
     private static final String MODEL_KEY_NOTIFICATION_MESSAGE = "notificationMessage";
+    private static final String MODEL_KEY_AVATAR_MESSAGE = "avatarMessage";
+    private static final String MODEL_KEY_AVATAR_ERROR = "avatarErrorMessage";
 
     private final UserService userService;
     private final NotificationService notificationService;
@@ -65,6 +68,29 @@ public class ProfileController {
 
         model.addAttribute("notificationPreference", notificationService.getOrCreatePreference(loginUser));
         model.addAttribute(MODEL_KEY_NOTIFICATION_MESSAGE, "通知設定を更新しました。");
+        return VIEW_SETTINGS;
+    }
+
+    /**
+     * アバター画像のアップロードを受け付ける。
+     */
+    @PostMapping("/avatar")
+    public String processUpdateAvatar(
+            @RequestParam("file") MultipartFile file,
+            HttpSession session,
+            Model model) {
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+
+        try {
+            UserAccount updatedUser = userService.updateAvatar(loginUser.getId(), file);
+            session.setAttribute(LoginController.SESSION_KEY_LOGIN_USER, updatedUser);
+            model.addAttribute(MODEL_KEY_AVATAR_MESSAGE, "アバター画像を更新しました。");
+        } catch (IllegalArgumentException invalidImage) {
+            model.addAttribute(MODEL_KEY_AVATAR_ERROR, invalidImage.getMessage());
+        }
+
+        model.addAttribute("notificationPreference", notificationService.getOrCreatePreference(loginUser));
         return VIEW_SETTINGS;
     }
 

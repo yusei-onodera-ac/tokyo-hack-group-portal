@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.CommentService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.DocumentService;
@@ -155,6 +156,25 @@ public class ProjectController {
             projectService.changeStatus(projectId, newStatus, loginUser);
         } catch (IllegalStateException ignoredPermissionError) {
             // 権限がない場合は状態を変更せず詳細画面へ戻す
+        }
+
+        return "redirect:/projects/" + projectId;
+    }
+
+    /**
+     * プロジェクトアイコン画像を更新する。OWNER または管理者のみ実行可能。
+     */
+    @PostMapping("/{id}/icon")
+    public String processUpdateIcon(
+            @PathVariable("id") Long projectId,
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        try {
+            projectService.updateIcon(projectId, file, loginUser);
+        } catch (IllegalArgumentException | IllegalStateException iconUpdateError) {
+            // 不正な画像・権限不足の場合は更新せず詳細画面へ戻す
         }
 
         return "redirect:/projects/" + projectId;

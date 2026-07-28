@@ -62,7 +62,16 @@
 
         <div class="sidebar__footer">
             <div class="sidebar__user">
-                <span class="avatar"><c:out value="${fn:substring(sessionScope.loginUser.displayName, 0, 1)}" /></span>
+                <span class="avatar">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.loginUser.avatarStoredFileName}">
+                            <img src="/users/${sessionScope.loginUser.id}/avatar" alt="">
+                        </c:when>
+                        <c:otherwise>
+                            <c:out value="${fn:substring(sessionScope.loginUser.displayName, 0, 1)}" />
+                        </c:otherwise>
+                    </c:choose>
+                </span>
                 <div class="sidebar__user-meta">
                     <div class="sidebar__user-name"><c:out value="${sessionScope.loginUser.displayName}" /></div>
                     <div class="sidebar__user-role"><c:out value="${sessionScope.loginUser.role.displayLabel}" /></div>

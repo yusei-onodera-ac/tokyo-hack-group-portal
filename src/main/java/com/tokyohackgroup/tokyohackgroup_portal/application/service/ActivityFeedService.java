@@ -49,7 +49,7 @@ public class ActivityFeedService {
                 .forEach(poll -> items.add(toPollItem(poll)));
 
         return items.stream()
-                .sorted(Comparator.comparing(ActivityItemDto::occurredAt).reversed())
+                .sorted(Comparator.comparing(ActivityItemDto::getOccurredAt).reversed())
                 .limit(limit)
                 .toList();
     }

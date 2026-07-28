@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <c:set var="pageTitle" value="マイページ" scope="request" />
 <c:set var="activeNav" value="settings" scope="request" />
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
@@ -28,6 +29,35 @@
                     <td><span class="badge ${sessionScope.loginUser.admin ? 'badge-primary' : 'badge-neutral'}"><c:out value="${sessionScope.loginUser.role.displayLabel}" /></span></td>
                 </tr>
             </table>
+        </div>
+    </div>
+
+    <div class="card card-pad">
+        <h2 class="h2 mb-0">アイコン画像</h2>
+        <c:if test="${not empty avatarMessage}">
+            <div class="alert alert-success mt-2"><c:out value="${avatarMessage}" /></div>
+        </c:if>
+        <c:if test="${not empty avatarErrorMessage}">
+            <div class="alert alert-danger mt-2"><c:out value="${avatarErrorMessage}" /></div>
+        </c:if>
+        <div class="avatar-upload mt-4">
+            <span class="avatar avatar-lg">
+                <c:choose>
+                    <c:when test="${not empty sessionScope.loginUser.avatarStoredFileName}">
+                        <img src="/users/${sessionScope.loginUser.id}/avatar" alt="">
+                    </c:when>
+                    <c:otherwise>
+                        <c:out value="${fn:substring(sessionScope.loginUser.displayName, 0, 1)}" />
+                    </c:otherwise>
+                </c:choose>
+            </span>
+            <form action="/settings/avatar" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label" for="avatarFile">画像ファイル（PNG/JPG/GIF/WEBP、3MBまで）</label>
+                    <input class="input" type="file" id="avatarFile" name="file" accept="image/png,image/jpeg,image/gif,image/webp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">アップロード</button>
+            </form>
         </div>
     </div>
 

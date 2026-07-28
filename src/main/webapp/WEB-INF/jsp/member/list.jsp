@@ -24,7 +24,16 @@
             <c:forEach var="member" items="${memberList}">
                 <tr>
                     <td class="flex items-center gap-2">
-                        <span class="avatar avatar-sm"><c:out value="${fn:substring(member.displayName, 0, 1)}" /></span>
+                        <span class="avatar avatar-sm">
+                            <c:choose>
+                                <c:when test="${not empty member.avatarStoredFileName}">
+                                    <img src="/users/${member.id}/avatar" alt="">
+                                </c:when>
+                                <c:otherwise>
+                                    <c:out value="${fn:substring(member.displayName, 0, 1)}" />
+                                </c:otherwise>
+                            </c:choose>
+                        </span>
                         <c:out value="${member.displayName}" />
                     </td>
                     <td><span class="badge ${member.admin ? 'badge-primary' : 'badge-neutral'}"><c:out value="${member.role.displayLabel}" /></span></td>

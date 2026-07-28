@@ -41,6 +41,10 @@ public class UserAccount {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /** アバター画像のサーバーディスク上の保存ファイル名（未設定の場合は null） */
+    @Column(name = "avatar_stored_file_name", length = 255)
+    private String avatarStoredFileName;
+
     /**
      * JPA（Hibernate）の規定に従うためのデフォルトコンストラクタ。
      * 外部ドメイン層での不完全な無引数インスタンス化を防止するため、アクセス範囲を protected に限定。
@@ -91,6 +95,10 @@ public class UserAccount {
         return createdAt;
     }
 
+    public String getAvatarStoredFileName() {
+        return avatarStoredFileName;
+    }
+
     /**
      * 呼び出し元で `role == UserRole.ADMINISTRATOR` のような内部状態の比較を直接書かせない（デメテルの法則）。
      * 管理者チェックの意図を明確にし、条件分岐の散乱を防ぐ。
@@ -134,5 +142,12 @@ public class UserAccount {
      */
     public void deactivate() {
         this.isActive = false;
+    }
+
+    /**
+     * アバター画像の保存ファイル名を更新する。
+     */
+    public void changeAvatar(String newAvatarStoredFileName) {
+        this.avatarStoredFileName = newAvatarStoredFileName;
     }
 }

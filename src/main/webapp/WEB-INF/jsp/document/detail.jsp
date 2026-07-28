@@ -89,7 +89,16 @@
     </c:if>
     <c:forEach var="comment" items="${commentList}">
         <div class="comment-item">
-            <span class="avatar avatar-sm"><c:out value="${fn:substring(comment.author.displayName, 0, 1)}" /></span>
+            <span class="avatar avatar-sm">
+                <c:choose>
+                    <c:when test="${not empty comment.author.avatarStoredFileName}">
+                        <img src="/users/${comment.author.id}/avatar" alt="">
+                    </c:when>
+                    <c:otherwise>
+                        <c:out value="${fn:substring(comment.author.displayName, 0, 1)}" />
+                    </c:otherwise>
+                </c:choose>
+            </span>
             <div class="comment-item__body">
                 <strong><c:out value="${comment.author.displayName}" /></strong>
                 <span class="text-muted text-sm"> ・ <c:out value="${comment.createdAt}" /></span>

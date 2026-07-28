@@ -1,5 +1,6 @@
 package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
@@ -30,10 +32,12 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userAccountRepository;
+    private final ImageStorageService imageStorageService;
 
-    public ProjectService(ProjectRepository projectRepository, UserAccountRepository userAccountRepository) {
+    public ProjectService(ProjectRepository projectRepository, UserAccountRepository userAccountRepository, ImageStorageService imageStorageService) {
         this.projectRepository = projectRepository;
         this.userAccountRepository = userAccountRepository;
+        this.imageStorageService = imageStorageService;
     }
 
     /**
@@ -136,5 +140,29 @@ public class ProjectService {
 
         targetProject.toggleFavorite(user);
         projectRepository.save(targetProject);
+    }
+
+    /**
+     * プロジェクトアイコン画像を更新する。OWNER または管理者のみ実行可能。既存の画像があれば置き換え時に削除される。
+     */
+    @Transactional
+    public Project updateIcon(Long projectId, MultipartFile file, UserAccount actingUser) {
+        Project targetProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたプロジェクトが見つかりません。ID: " + projectId));
+
+        if (!targetProject.isOwner(actingUser) && !actingUser.isAdmin()) {
+            throw new IllegalStateException("アイコンを変更する権限がありません。");
+        }
+
+        String storedFileName = imageStorageService.storeIcon(projectId, file, targetProject.getIconStoredFileName());
+        targetProject.changeIcon(storedFileName);
+        return projectRepository.save(targetProject);
+    }
+
+    /**
+     * プロジェクトアイコン画像のストリームを取得する。
+     */
+    public InputStream loadIconStream(Long projectId, String storedFileName) {
+        return imageStorageService.loadIcon(projectId, storedFileName);
     }
 }
