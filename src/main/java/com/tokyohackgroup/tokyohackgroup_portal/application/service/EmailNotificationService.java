@@ -1,5 +1,8 @@
 package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -28,6 +31,11 @@ public class EmailNotificationService {
 
     /** ユーザー招待メール件名の接頭辞 */
     private static final String INVITE_SUBJECT_PREFIX = "【ポータル招待】";
+
+    /** 日程調整確定メール件名の接頭辞 */
+    private static final String POLL_CONFIRMED_SUBJECT_PREFIX = "【日程確定】";
+
+    private static final DateTimeFormatter POLL_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm");
 
     private final JavaMailSender javaMailSender;
 
@@ -97,6 +105,31 @@ public class EmailNotificationService {
                 + "メールアドレス: " + targetEmail + "\n"
                 + "仮パスワード: " + temporaryPassword + "\n\n"
                 + "ログイン後、マイページから速やかにパスワードを変更してください。");
+
+        try {
+            javaMailSender.send(message);
+        } catch (Exception exception) {
+            System.err.println("メール送信処理をスキップしました: " + exception.getMessage());
+        }
+    }
+
+    /**
+     * 日程調整の確定時に、招待者へ確定日時を通知する。
+     *
+     * @param targetEmail       宛先メールアドレス
+     * @param displayName       宛先ユーザーの表示名
+     * @param pollTitle         日程調整のタイトル
+     * @param confirmedDateTime 確定した開催日時
+     */
+    @Async
+    public void sendPollConfirmedEmail(String targetEmail, String displayName, String pollTitle, LocalDateTime confirmedDateTime) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setTo(targetEmail);
+        message.setSubject(POLL_CONFIRMED_SUBJECT_PREFIX + pollTitle);
+        message.setText(displayName + " 様\n\n「" + pollTitle + "」の開催日時が確定しました。\n"
+                + "確定日時: " + confirmedDateTime.format(POLL_DATE_FORMAT) + "\n\n"
+                + "ポータルサイトのカレンダーからもご確認いただけます。");
 
         try {
             javaMailSender.send(message);

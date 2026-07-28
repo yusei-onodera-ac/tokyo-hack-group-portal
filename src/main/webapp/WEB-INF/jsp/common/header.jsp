@@ -27,6 +27,12 @@
             <a class="sidebar__link ${activeNav == 'projects' ? 'is-active' : ''}" href="/projects">
                 <span class="sidebar__link-icon">📁</span>プロジェクト
             </a>
+            <a class="sidebar__link ${activeNav == 'calendar' ? 'is-active' : ''}" href="/calendar">
+                <span class="sidebar__link-icon">📅</span>カレンダー
+            </a>
+            <a class="sidebar__link ${activeNav == 'polls' ? 'is-active' : ''}" href="/polls">
+                <span class="sidebar__link-icon">🗳️</span>日程調整
+            </a>
             <a class="sidebar__link ${activeNav == 'links' ? 'is-active' : ''}" href="/links">
                 <span class="sidebar__link-icon">🔗</span>外部リンク集
             </a>

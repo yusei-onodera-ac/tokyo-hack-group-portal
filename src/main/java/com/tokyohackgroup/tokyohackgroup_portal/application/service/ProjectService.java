@@ -63,6 +63,14 @@ public class ProjectService {
         return Sort.by(Sort.Direction.DESC, targetProperty);
     }
 
+    /**
+     * 指定ユーザーが参加しているプロジェクトの一覧を取得する（カレンダー・日程調整のプロジェクト選択に使用）。
+     */
+    public List<Project> findProjectsForUser(UserAccount user) {
+        List<Long> projectIds = projectRepository.findProjectIdsForMember(user);
+        return projectRepository.findAllById(projectIds);
+    }
+
     public Optional<Project> findById(Long projectId) {
         Optional<Project> projectOptional = projectRepository.findById(projectId);
         projectOptional.ifPresent(this::initializeLazyAssociations);

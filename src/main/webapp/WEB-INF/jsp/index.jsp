@@ -22,6 +22,16 @@
         <span class="menu-card__title">プロジェクト一覧</span>
         <span class="menu-card__desc">各プロジェクトの状況確認、メンバー管理</span>
     </a>
+    <a class="menu-card" href="/calendar">
+        <span class="menu-card__icon">📅</span>
+        <span class="menu-card__title">カレンダー</span>
+        <span class="menu-card__desc">プロジェクトの予定・マイルストーンを月/週/日で確認</span>
+    </a>
+    <a class="menu-card" href="/polls">
+        <span class="menu-card__icon">🗳️</span>
+        <span class="menu-card__title">日程調整</span>
+        <span class="menu-card__desc">候補日時への投票でイベントの開催日を決定</span>
+    </a>
     <a class="menu-card" href="/links">
         <span class="menu-card__icon">🔗</span>
         <span class="menu-card__title">外部サービスのリンク集</span>

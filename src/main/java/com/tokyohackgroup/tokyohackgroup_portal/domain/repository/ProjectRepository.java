@@ -1,5 +1,7 @@
 package com.tokyohackgroup.tokyohackgroup_portal.domain.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,4 +38,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("status") ProjectStatus status,
             @Param("currentUser") UserAccount currentUser,
             Pageable pageable);
+
+    /**
+     * 指定ユーザーが参加している（OWNER/MEMBER問わず）プロジェクトのID一覧を取得する。
+     * カレンダーの集約表示など、所属プロジェクトの絞り込みに使用する。
+     */
+    @Query("SELECT p.id FROM Project p WHERE EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project = p AND pm.user = :user)")
+    List<Long> findProjectIdsForMember(@Param("user") UserAccount user);
 }
