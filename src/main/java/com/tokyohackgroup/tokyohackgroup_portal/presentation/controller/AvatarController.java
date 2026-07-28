@@ -13,23 +13,33 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.ImageStorageService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.ProjectService;
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.SystemSettingService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 
 /**
- * ユーザーアバター・プロジェクトアイコン画像の配信を制御するコントローラー。
+ * ユーザーアバター・プロジェクトアイコン・アプリアイコン画像の配信を制御するコントローラー。
  */
 @Controller
 public class AvatarController {
 
     private final UserService userService;
     private final ProjectService projectService;
+    private final SystemSettingService systemSettingService;
+    private final ImageStorageService imageStorageService;
 
-    public AvatarController(UserService userService, ProjectService projectService) {
+    public AvatarController(
+            UserService userService,
+            ProjectService projectService,
+            SystemSettingService systemSettingService,
+            ImageStorageService imageStorageService) {
         this.userService = userService;
         this.projectService = projectService;
+        this.systemSettingService = systemSettingService;
+        this.imageStorageService = imageStorageService;
     }
 
     @GetMapping("/users/{id}/avatar")
@@ -53,6 +63,17 @@ public class AvatarController {
 
         String storedFileName = projectOptional.get().getIconStoredFileName();
         InputStream imageStream = projectService.loadIconStream(projectId, storedFileName);
+        return buildImageResponse(imageStream, storedFileName);
+    }
+
+    @GetMapping("/app/icon")
+    public ResponseEntity<InputStreamResource> showAppIcon() {
+        String storedFileName = systemSettingService.getAppIconStoredFileName();
+        if (storedFileName == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        InputStream imageStream = imageStorageService.loadIcon(SystemSettingService.APP_ICON_OWNER_ID, storedFileName);
         return buildImageResponse(imageStream, storedFileName);
     }
 

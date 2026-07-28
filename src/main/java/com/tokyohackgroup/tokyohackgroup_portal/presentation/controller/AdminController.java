@@ -19,8 +19,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.AuditLogService;
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.ImageStorageService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.SystemSettingService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
@@ -50,11 +52,17 @@ public class AdminController {
     private final UserService userService;
     private final SystemSettingService systemSettingService;
     private final AuditLogService auditLogService;
+    private final ImageStorageService imageStorageService;
 
-    public AdminController(UserService userService, SystemSettingService systemSettingService, AuditLogService auditLogService) {
+    public AdminController(
+            UserService userService,
+            SystemSettingService systemSettingService,
+            AuditLogService auditLogService,
+            ImageStorageService imageStorageService) {
         this.userService = userService;
         this.systemSettingService = systemSettingService;
         this.auditLogService = auditLogService;
+        this.imageStorageService = imageStorageService;
     }
 
     @GetMapping
@@ -152,6 +160,37 @@ public class AdminController {
         model.addAttribute("maintenanceEnabled", systemSettingService.isMaintenanceModeEnabled());
         model.addAttribute("sessionTimeoutMinutes", systemSettingService.getSessionTimeoutMinutes());
         return VIEW_ADMIN_SETTINGS;
+    }
+
+    /**
+     * アプリアイコン画像をアップロードする。既存の画像があれば置き換え時に削除される。
+     */
+    @PostMapping("/settings/icon")
+    public String processUpdateAppIcon(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request,
+            HttpSession session,
+            Model model) {
+
+        UserAccount actingUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+
+        try {
+            String storedFileName = imageStorageService.storeIcon(
+                    SystemSettingService.APP_ICON_OWNER_ID, file, systemSettingService.getAppIconStoredFileName());
+            systemSettingService.updateAppIcon(storedFileName);
+            auditLogService.record(actingUser, AuditLogCategory.OPERATION, "アプリアイコン更新",
+                    request.getRemoteAddr(), null);
+        } catch (IllegalArgumentException invalidImage) {
+            applyCommonModelAttributes(model, "システム共通設定", "settings");
+            model.addAttribute("siteName", systemSettingService.getSiteName());
+            model.addAttribute("logoUrl", systemSettingService.getLogoUrl());
+            model.addAttribute("maintenanceEnabled", systemSettingService.isMaintenanceModeEnabled());
+            model.addAttribute("sessionTimeoutMinutes", systemSettingService.getSessionTimeoutMinutes());
+            model.addAttribute("appIconErrorMessage", invalidImage.getMessage());
+            return VIEW_ADMIN_SETTINGS;
+        }
+
+        return REDIRECT_ADMIN_SETTINGS;
     }
 
     @PostMapping("/settings")

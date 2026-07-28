@@ -19,6 +19,10 @@ public class SystemSettingService {
     public static final String KEY_LOGO_URL = "site.logoUrl";
     public static final String KEY_MAINTENANCE_ENABLED = "maintenance.enabled";
     public static final String KEY_SESSION_TIMEOUT_MINUTES = "session.timeoutMinutes";
+    public static final String KEY_APP_ICON_STORED_FILE_NAME = "site.appIconStoredFileName";
+
+    /** アプリアイコン画像を {@link ImageStorageService} の icons ディレクトリへ保存する際の所有者ID（プロジェクトIDと衝突しない固定値） */
+    public static final Long APP_ICON_OWNER_ID = 0L;
 
     private static final String DEFAULT_SITE_NAME = "Tokyo Hack Group Portal";
     private static final String DEFAULT_LOGO_URL = "";
@@ -48,6 +52,25 @@ public class SystemSettingService {
         } catch (NumberFormatException invalidNumber) {
             return DEFAULT_SESSION_TIMEOUT_MINUTES;
         }
+    }
+
+    /**
+     * アプリアイコン画像の保存ファイル名を取得する（未設定の場合は null）。
+     */
+    public String getAppIconStoredFileName() {
+        String storedFileName = getValue(KEY_APP_ICON_STORED_FILE_NAME, "");
+        return storedFileName.isBlank() ? null : storedFileName;
+    }
+
+    /**
+     * アプリアイコン画像の保存ファイル名を更新する。
+     */
+    @Transactional
+    public void updateAppIcon(String storedFileName) {
+        SystemSetting targetSetting = systemSettingRepository.findBySettingKey(KEY_APP_ICON_STORED_FILE_NAME)
+                .orElseGet(() -> new SystemSetting(KEY_APP_ICON_STORED_FILE_NAME, null));
+        targetSetting.changeValue(storedFileName);
+        systemSettingRepository.save(targetSetting);
     }
 
     private String getValue(String key, String defaultValue) {

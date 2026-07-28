@@ -15,7 +15,14 @@
     <div class="sidebar-backdrop" data-sidebar-backdrop></div>
     <aside class="sidebar" data-sidebar>
         <div class="sidebar__brand">
-            <span class="sidebar__brand-mark">THG</span>
+            <span class="sidebar__brand-mark">
+                <c:choose>
+                    <c:when test="${not empty appIconStoredFileName}">
+                        <img src="/app/icon" alt="">
+                    </c:when>
+                    <c:otherwise>THG</c:otherwise>
+                </c:choose>
+            </span>
             <span>Tokyo Hack Group</span>
         </div>
 

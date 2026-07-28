@@ -11,7 +11,31 @@
 
 <%@ include file="/WEB-INF/jsp/admin/_tabs.jsp" %>
 
-<div class="card card-pad" style="max-width: 560px;">
+<div class="card card-pad mt-4" style="max-width: 560px;">
+    <h2 class="h2 mb-0">アプリアイコン</h2>
+    <c:if test="${not empty appIconErrorMessage}">
+        <div class="alert alert-danger mt-2"><c:out value="${appIconErrorMessage}" /></div>
+    </c:if>
+    <div class="avatar-upload mt-4">
+        <span class="avatar avatar-lg">
+            <c:choose>
+                <c:when test="${not empty appIconStoredFileName}">
+                    <img src="/app/icon" alt="">
+                </c:when>
+                <c:otherwise>THG</c:otherwise>
+            </c:choose>
+        </span>
+        <form action="/admin/settings/icon" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="appIconFile">画像ファイル（PNG/JPG/GIF/WEBP、3MBまで）</label>
+                <input class="input" type="file" id="appIconFile" name="file" accept="image/png,image/jpeg,image/gif,image/webp" required>
+            </div>
+            <button type="submit" class="btn btn-primary">アップロード</button>
+        </form>
+    </div>
+</div>
+
+<div class="card card-pad mt-4" style="max-width: 560px;">
     <form action="/admin/settings" method="post">
         <div class="form-group">
             <label class="form-label" for="siteName">サイト名</label>
