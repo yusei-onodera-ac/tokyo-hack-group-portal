@@ -3,6 +3,7 @@ package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -13,12 +14,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EmailNotificationService {
-
-    /** 開発・運用管理者のメールアドレス（バグ報告等の宛先） */
-    private static final String SYSTEM_ADMIN_EMAIL = "admin@tokyohackgroup.com";
-
-    /** システム送信元メールアドレス */
-    private static final String SYSTEM_SENDER_EMAIL = "noreply@tokyohackgroup.com";
 
     /** 管理者通知メール件名の接頭辞 */
     private static final String CONTACT_SUBJECT_PREFIX = "【ポータルシステム】";
@@ -41,9 +36,16 @@ public class EmailNotificationService {
     private static final DateTimeFormatter POLL_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm");
 
     private final JavaMailSender javaMailSender;
+    private final String systemSenderEmail;
+    private final String systemAdminEmail;
 
-    public EmailNotificationService(JavaMailSender javaMailSender) {
+    public EmailNotificationService(
+            JavaMailSender javaMailSender,
+            @Value("${app.mail.sender-email:noreply@tokyohackgroup.com}") String systemSenderEmail,
+            @Value("${app.mail.admin-email:admin@tokyohackgroup.com}") String systemAdminEmail) {
         this.javaMailSender = javaMailSender;
+        this.systemSenderEmail = systemSenderEmail;
+        this.systemAdminEmail = systemAdminEmail;
     }
 
     /**
@@ -57,8 +59,8 @@ public class EmailNotificationService {
     @Async
     public void sendContactToAdmin(String senderName, String content) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(SYSTEM_SENDER_EMAIL);
-        message.setTo(SYSTEM_ADMIN_EMAIL);
+        message.setFrom(systemSenderEmail);
+        message.setTo(systemAdminEmail);
         message.setSubject(CONTACT_SUBJECT_PREFIX + senderName + "様からの問い合わせ");
         message.setText(content);
 
@@ -79,7 +81,7 @@ public class EmailNotificationService {
     @Async
     public void sendNoticeNotification(String targetEmail, String noticeTitle) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setFrom(systemSenderEmail);
         message.setTo(targetEmail);
         message.setSubject(NOTICE_SUBJECT_PREFIX + noticeTitle);
         message.setText(NOTICE_BODY_TEMPLATE);
@@ -101,7 +103,7 @@ public class EmailNotificationService {
     @Async
     public void sendInviteEmail(String targetEmail, String displayName, String temporaryPassword) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setFrom(systemSenderEmail);
         message.setTo(targetEmail);
         message.setSubject(INVITE_SUBJECT_PREFIX + "アカウントが発行されました");
         message.setText(displayName + " 様\n\nTokyo Hack Group Portal のアカウントが発行されました。\n"
@@ -127,7 +129,7 @@ public class EmailNotificationService {
     @Async
     public void sendPollOpenedEmail(String targetEmail, String displayName, String pollTitle, String organizerName) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setFrom(systemSenderEmail);
         message.setTo(targetEmail);
         message.setSubject(POLL_OPENED_SUBJECT_PREFIX + pollTitle);
         message.setText(displayName + " 様\n\n" + organizerName + " さんから日程調整「" + pollTitle + "」に招待されました。\n"
@@ -151,7 +153,7 @@ public class EmailNotificationService {
     @Async
     public void sendPollConfirmedEmail(String targetEmail, String displayName, String pollTitle, LocalDateTime confirmedDateTime) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(SYSTEM_SENDER_EMAIL);
+        message.setFrom(systemSenderEmail);
         message.setTo(targetEmail);
         message.setSubject(POLL_CONFIRMED_SUBJECT_PREFIX + pollTitle);
         message.setText(displayName + " 様\n\n「" + pollTitle + "」の開催日時が確定しました。\n"

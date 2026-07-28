@@ -236,6 +236,23 @@ public class AdminController {
         return VIEW_ADMIN_LOGS;
     }
 
+    /**
+     * ログを一括削除する。category未指定の場合は全件削除する。
+     */
+    @PostMapping("/logs/delete")
+    public String processDeleteLogs(
+            @RequestParam(name = "category", required = false) AuditLogCategory category,
+            HttpServletRequest request,
+            HttpSession session) {
+
+        UserAccount actingUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        auditLogService.deleteLogs(category);
+        auditLogService.record(actingUser, AuditLogCategory.OPERATION, "監査ログ一括削除",
+                request.getRemoteAddr(), category != null ? "対象区分: " + category : "全件");
+
+        return (category != null) ? "redirect:/admin/logs?category=" + category : "redirect:/admin/logs";
+    }
+
     @GetMapping("/logs/export")
     public ResponseEntity<byte[]> exportAuditLogsAsCsv(@RequestParam(name = "category", required = false) AuditLogCategory category) {
         String csvContent = auditLogService.exportCsv(category);

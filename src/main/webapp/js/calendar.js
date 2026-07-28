@@ -336,6 +336,9 @@
     loadEvents();
   }
 
+  /** スマホ幅では7列の月グリッドが窮屈になるため、初期表示をリスト形式の「アジェンダ」ビューにする。 */
+  var MOBILE_BREAKPOINT_PX = 700;
+
   document.addEventListener("DOMContentLoaded", function () {
     if (!document.getElementById("calendar-root")) {
       return;
@@ -354,6 +357,13 @@
       state.refDate = new Date();
       loadEvents();
     });
+
+    if (window.innerWidth <= MOBILE_BREAKPOINT_PX) {
+      state.viewMode = "agenda";
+      document.querySelectorAll("#cal-view-tabs .tabs__link").forEach(function (link) {
+        link.classList.toggle("is-active", link.dataset.view === "agenda");
+      });
+    }
 
     loadEvents();
   });

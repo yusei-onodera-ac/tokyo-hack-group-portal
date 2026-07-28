@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <p class="mb-0"><a href="/projects/${projectTarget.id}">← <c:out value="${projectTarget.title}" /> へ戻る</a></p>
@@ -13,7 +14,7 @@
             <span class="badge badge-primary"><c:out value="${documentTarget.category.displayLabel}" /></span>
         </div>
         <p class="text-muted"><c:out value="${documentTarget.description}" /></p>
-        <p class="text-muted text-sm">作成者: <c:out value="${documentTarget.createdBy.displayName}" /> ／ 最終更新: <c:out value="${documentTarget.updatedAt}" /></p>
+        <p class="text-muted text-sm">作成者: <c:out value="${documentTarget.createdBy.displayName}" /> ／ 最終更新: ${df:formatDateTime(documentTarget.updatedAt)}</p>
     </div>
 </div>
 
@@ -70,11 +71,11 @@
         <tbody>
             <c:forEach var="version" items="${documentTarget.versions}">
                 <tr>
-                    <td>v<c:out value="${version.versionNumber}" /></td>
-                    <td><c:out value="${version.uploadedBy.displayName}" /></td>
-                    <td><c:out value="${version.uploadedAt}" /></td>
+                    <td data-label="バージョン">v<c:out value="${version.versionNumber}" /></td>
+                    <td data-label="更新者"><c:out value="${version.uploadedBy.displayName}" /></td>
+                    <td data-label="更新日時">${df:formatDateTime(version.uploadedAt)}</td>
                     <c:if test="${documentTarget.documentType == 'FILE'}">
-                        <td><a href="/projects/${projectTarget.id}/documents/${documentTarget.id}/versions/${version.id}/download">ダウンロード</a></td>
+                        <td data-label="操作"><a href="/projects/${projectTarget.id}/documents/${documentTarget.id}/versions/${version.id}/download">ダウンロード</a></td>
                     </c:if>
                 </tr>
             </c:forEach>
@@ -101,7 +102,7 @@
             </span>
             <div class="comment-item__body">
                 <strong><c:out value="${comment.author.displayName}" /></strong>
-                <span class="text-muted text-sm"> ・ <c:out value="${comment.createdAt}" /></span>
+                <span class="text-muted text-sm"> ・ ${df:formatDateTime(comment.createdAt)}</span>
                 <p class="comment-item__content"><c:out value="${comment.content}" /></p>
                 <c:if test="${comment.author.id == sessionScope.loginUser.id || sessionScope.loginUser.admin}">
                     <form action="/projects/${projectTarget.id}/documents/${documentTarget.id}/comments/${comment.id}/delete" method="post" onsubmit="return confirm('コメントを削除しますか？');">

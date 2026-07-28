@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <div class="page-header">
@@ -104,7 +105,7 @@
                                 <span class="avatar-stack__more">+${fn:length(project.members) - 4}</span>
                             </c:if>
                         </div>
-                        <span class="project-card__updated"><c:out value="${project.updatedAt}" /> 更新</span>
+                        <span class="project-card__updated">${df:formatDateTime(project.updatedAt)} 更新</span>
                     </div>
                 </div>
             </c:forEach>

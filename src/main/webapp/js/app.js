@@ -55,4 +55,17 @@
       toggleSidebar(false);
     }
   });
+
+  // フォームの二重送信（連打・複数回のEnter等）による重複登録を防止する。
+  // 送信ボタンを即座に無効化し、ページ遷移（redirect後の別画面表示）までクリックを受け付けない。
+  // onsubmit="return confirm(...)" でキャンセルされた場合（event.defaultPrevented）は無効化しない。
+  document.addEventListener("submit", function (event) {
+    var form = event.target;
+    if (!(form instanceof HTMLFormElement) || event.defaultPrevented) {
+      return;
+    }
+    form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (button) {
+      button.disabled = true;
+    });
+  });
 })();

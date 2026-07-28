@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <div class="page-header">
@@ -36,9 +37,9 @@
                 <tbody>
                     <c:forEach var="poll" items="${pollList}">
                         <tr>
-                            <td><a href="/polls/${poll.id}"><c:out value="${poll.title}" /></a></td>
-                            <td><c:out value="${poll.organizer.displayName}" /></td>
-                            <td>
+                            <td data-label="タイトル"><a href="/polls/${poll.id}"><c:out value="${poll.title}" /></a></td>
+                            <td data-label="主催者"><c:out value="${poll.organizer.displayName}" /></td>
+                            <td data-label="あなたの立場">
                                 <c:choose>
                                     <c:when test="${poll.organizer.id == currentUserId}">
                                         <span class="badge badge-primary">主催者</span>
@@ -48,13 +49,13 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td><c:out value="${empty poll.project ? '－' : poll.project.title}" /></td>
-                            <td>
+                            <td data-label="プロジェクト"><c:out value="${empty poll.project ? '－' : poll.project.title}" /></td>
+                            <td data-label="ステータス">
                                 <span class="badge ${poll.status == 'CLOSED' ? 'badge-success' : 'badge-warning'}">
                                     <c:out value="${poll.status.displayLabel}" />
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="回答状況">
                                 <c:choose>
                                     <c:when test="${poll.status == 'CLOSED'}">－</c:when>
                                     <c:when test="${respondedMap[poll.id]}">
@@ -65,7 +66,7 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td><c:out value="${empty poll.responseDeadline ? '－' : poll.responseDeadline}" /></td>
+                            <td data-label="回答期限">${empty poll.responseDeadline ? '－' : df:formatDateTime(poll.responseDeadline)}</td>
                         </tr>
                     </c:forEach>
                 </tbody>

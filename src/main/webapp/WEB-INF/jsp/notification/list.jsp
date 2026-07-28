@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <div class="page-header">
@@ -35,20 +36,20 @@
                 <tbody>
                     <c:forEach var="notification" items="${notificationPage.content}">
                         <tr>
-                            <td>
+                            <td data-label="状態">
                                 <c:choose>
                                     <c:when test="${notification.read}"><span class="badge badge-neutral">既読</span></c:when>
                                     <c:otherwise><span class="badge badge-primary">未読</span></c:otherwise>
                                 </c:choose>
                             </td>
-                            <td><c:out value="${notification.type.displayLabel}" /></td>
-                            <td>
+                            <td data-label="種別"><c:out value="${notification.type.displayLabel}" /></td>
+                            <td class="cell-stack" data-label="内容">
                                 <strong><c:out value="${notification.title}" /></strong>
                                 <c:if test="${not empty notification.message}"><br><span class="text-muted text-sm"><c:out value="${notification.message}" /></span></c:if>
                                 <c:if test="${not empty notification.linkUrl}"><br><a href="<c:out value='${notification.linkUrl}'/>">詳細を見る</a></c:if>
                             </td>
-                            <td><c:out value="${notification.createdAt}" /></td>
-                            <td>
+                            <td data-label="日時">${df:formatDateTime(notification.createdAt)}</td>
+                            <td data-label="操作">
                                 <c:if test="${!notification.read}">
                                     <form action="/notifications/${notification.id}/read" method="post">
                                         <button type="submit" class="btn btn-sm btn-secondary">既読にする</button>

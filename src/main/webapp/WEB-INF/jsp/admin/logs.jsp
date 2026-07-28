@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
 
 <div class="page-header">
@@ -31,6 +32,13 @@
             <c:param name="category" value="${selectedCategory}" />
         </c:url>
         <a class="btn btn-secondary" href="${exportUrl}">⬇ CSVダウンロード</a>
+        <form action="/admin/logs/delete" method="post"
+                onsubmit="return confirm('${empty selectedCategory ? "全区分のログを削除しますか？元に戻せません。" : "この区分のログを削除しますか？元に戻せません。"}');">
+            <c:if test="${not empty selectedCategory}">
+                <input type="hidden" name="category" value="${selectedCategory}">
+            </c:if>
+            <button type="submit" class="btn btn-danger">🗑 ${empty selectedCategory ? '全件削除' : 'この区分を削除'}</button>
+        </form>
     </div>
 </div>
 
@@ -49,8 +57,8 @@
         <tbody>
             <c:forEach var="log" items="${logPage.content}">
                 <tr>
-                    <td><c:out value="${log.createdAt}" /></td>
-                    <td>
+                    <td data-label="日時">${df:formatDateTime(log.createdAt)}</td>
+                    <td data-label="区分">
                         <span class="badge
                             <c:choose>
                                 <c:when test="${log.category == 'LOGIN'}">badge-info</c:when>
@@ -58,10 +66,10 @@
                                 <c:otherwise>badge-primary</c:otherwise>
                             </c:choose>"><c:out value="${log.category.displayLabel}" /></span>
                     </td>
-                    <td><c:out value="${empty log.user ? '(匿名)' : log.user.displayName}" /></td>
-                    <td><c:out value="${log.action}" /></td>
-                    <td><c:out value="${log.details}" /></td>
-                    <td><c:out value="${log.ipAddress}" /></td>
+                    <td data-label="ユーザー"><c:out value="${empty log.user ? '(匿名)' : log.user.displayName}" /></td>
+                    <td data-label="操作"><c:out value="${log.action}" /></td>
+                    <td class="cell-stack" data-label="詳細"><c:out value="${log.details}" /></td>
+                    <td data-label="IPアドレス"><c:out value="${log.ipAddress}" /></td>
                 </tr>
             </c:forEach>
         </tbody>

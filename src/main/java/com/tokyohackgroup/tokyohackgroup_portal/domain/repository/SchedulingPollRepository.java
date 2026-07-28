@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.poll.SchedulingPoll;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 
 /**
  * 日程調整（scheduling_pollsテーブル）に対するデータアクセスを担うリポジトリ。
@@ -18,4 +19,6 @@ public interface SchedulingPollRepository extends JpaRepository<SchedulingPoll, 
 
     @Query("SELECT p FROM SchedulingPoll p WHERE p.organizer = :user OR :user MEMBER OF p.invitees ORDER BY p.createdAt DESC")
     List<SchedulingPoll> findByOrganizerOrInvitee(@Param("user") UserAccount user);
+
+    List<SchedulingPoll> findByProject(Project project);
 }

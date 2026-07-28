@@ -133,13 +133,98 @@ public class ProjectController {
         model.addAttribute(MODEL_KEY_ACTIVE_NAV, "projects");
         model.addAttribute(MODEL_KEY_PROJECT_TARGET, project);
         model.addAttribute(MODEL_KEY_STATUS_LIST, ProjectStatus.values());
-        model.addAttribute("canManageStatus", project.isOwner(loginUser) || loginUser.isAdmin());
+        boolean canManage = project.isOwner(loginUser) || loginUser.isAdmin();
+        model.addAttribute("canManageStatus", canManage);
         model.addAttribute("documentList", documentService.findByProject(project));
         model.addAttribute("categoryList", DocumentCategory.values());
         model.addAttribute("taskList", taskService.findByProject(project));
         model.addAttribute("taskStatusList", TaskStatus.values());
         model.addAttribute("commentList", commentService.findByProject(project));
+
+        if (canManage) {
+            Set<Long> memberIds = project.getMembers().stream()
+                    .map(member -> member.getUser().getId())
+                    .collect(Collectors.toSet());
+            List<UserAccount> addableUsers = userService.fetchAllActiveUsers().stream()
+                    .filter(candidate -> !memberIds.contains(candidate.getId()))
+                    .toList();
+            model.addAttribute("addableUserList", addableUsers);
+        }
+
         return VIEW_PROJECT_DETAIL;
+    }
+
+    /**
+     * プロジェクトのタイトル・概要を変更する。OWNER または管理者のみ実行可能。
+     */
+    @PostMapping("/{id}/edit")
+    public String processUpdateDetails(
+            @PathVariable("id") Long projectId,
+            @RequestParam("title") String title,
+            @RequestParam(name = "description", required = false) String description,
+            HttpSession session) {
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        try {
+            projectService.updateDetails(projectId, title, description, loginUser);
+        } catch (IllegalStateException ignoredPermissionError) {
+            // 権限がない場合は変更せず詳細画面へ戻す
+        }
+
+        return "redirect:/projects/" + projectId;
+    }
+
+    /**
+     * メンバーを追加する。OWNER または管理者のみ実行可能。
+     */
+    @PostMapping("/{id}/members")
+    public String processAddMember(
+            @PathVariable("id") Long projectId,
+            @RequestParam("userId") Long userId,
+            HttpSession session) {
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        try {
+            projectService.addMember(projectId, userId, loginUser);
+        } catch (IllegalArgumentException | IllegalStateException ignoredError) {
+            // 不正なユーザー指定・権限不足の場合は追加せず詳細画面へ戻す
+        }
+
+        return "redirect:/projects/" + projectId;
+    }
+
+    /**
+     * メンバーを除外する。OWNER または管理者のみ実行可能。唯一のOWNERは除外できない。
+     */
+    @PostMapping("/{id}/members/{userId}/delete")
+    public String processRemoveMember(
+            @PathVariable("id") Long projectId,
+            @PathVariable("userId") Long userId,
+            HttpSession session) {
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        try {
+            projectService.removeMember(projectId, userId, loginUser);
+        } catch (IllegalArgumentException | IllegalStateException ignoredError) {
+            // 対象外ユーザー・唯一のOWNER除外・権限不足の場合は変更せず詳細画面へ戻す
+        }
+
+        return "redirect:/projects/" + projectId;
+    }
+
+    /**
+     * プロジェクトを削除する。OWNER または管理者のみ実行可能。
+     */
+    @PostMapping("/{id}/delete")
+    public String processDeleteProject(@PathVariable("id") Long projectId, HttpSession session) {
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        try {
+            projectService.deleteProject(projectId, loginUser);
+        } catch (IllegalStateException ignoredPermissionError) {
+            return "redirect:/projects/" + projectId;
+        }
+
+        return REDIRECT_PROJECT_LIST;
     }
 
     /**

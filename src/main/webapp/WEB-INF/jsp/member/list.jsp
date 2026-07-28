@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <c:set var="pageTitle" value="メンバー一覧" scope="request" />
 <c:set var="activeNav" value="members" scope="request" />
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
@@ -23,7 +24,7 @@
         <tbody>
             <c:forEach var="member" items="${memberList}">
                 <tr>
-                    <td class="flex items-center gap-2">
+                    <td class="flex items-center gap-2" data-label="表示名">
                         <span class="avatar avatar-sm">
                             <c:choose>
                                 <c:when test="${not empty member.avatarStoredFileName}">
@@ -36,8 +37,8 @@
                         </span>
                         <c:out value="${member.displayName}" />
                     </td>
-                    <td><span class="badge ${member.admin ? 'badge-primary' : 'badge-neutral'}"><c:out value="${member.role.displayLabel}" /></span></td>
-                    <td><c:out value="${member.createdAt}" /></td>
+                    <td data-label="役割（権限）"><span class="badge ${member.admin ? 'badge-primary' : 'badge-neutral'}"><c:out value="${member.role.displayLabel}" /></span></td>
+                    <td data-label="登録日">${df:formatDateTime(member.createdAt)}</td>
                 </tr>
             </c:forEach>
         </tbody>

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="df" uri="/WEB-INF/tld/functions.tld"%>
 <c:set var="pageTitle" value="お知らせ一覧" scope="request" />
 <c:set var="activeNav" value="notices" scope="request" />
 <%@ include file="/WEB-INF/jsp/common/header.jsp" %>
@@ -40,14 +41,14 @@
         <tbody>
             <c:forEach var="notice" items="${noticeList}">
                 <tr>
-                    <td><strong><c:out value="${notice.title}" /></strong></td>
-                    <td><c:out value="${notice.content}" /></td>
-                    <td><span class="badge badge-neutral"><c:out value="${notice.category.displayLabel}" /></span></td>
-                    <td><c:out value="${notice.tags}" /></td>
-                    <td><c:out value="${notice.author.displayName}" /></td>
-                    <td><c:out value="${notice.createdAt}" /></td>
+                    <td data-label="タイトル"><strong><c:out value="${notice.title}" /></strong></td>
+                    <td class="cell-stack" data-label="本文"><c:out value="${notice.content}" /></td>
+                    <td data-label="カテゴリ"><span class="badge badge-neutral"><c:out value="${notice.category.displayLabel}" /></span></td>
+                    <td data-label="タグ"><c:out value="${notice.tags}" /></td>
+                    <td data-label="作成者"><c:out value="${notice.author.displayName}" /></td>
+                    <td data-label="作成日時">${df:formatDateTime(notice.createdAt)}</td>
                     <c:if test="${sessionScope.loginUser.admin}">
-                        <td><a href="/notices/${notice.id}/edit">編集</a></td>
+                        <td data-label="操作"><a href="/notices/${notice.id}/edit">編集</a></td>
                     </c:if>
                 </tr>
             </c:forEach>
