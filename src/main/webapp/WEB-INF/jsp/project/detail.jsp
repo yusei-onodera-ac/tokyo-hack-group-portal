@@ -26,8 +26,8 @@
                     <c:when test="${projectTarget.status == 'ARCHIVED'}">badge-neutral</c:when>
                     <c:otherwise>badge-warning</c:otherwise>
                 </c:choose>"><c:out value="${projectTarget.status.displayLabel}" /></span>
-            <span class="badge ${projectTarget.public ? 'badge-info' : 'badge-neutral'}">
-                <c:choose><c:when test="${projectTarget.public}">公開</c:when><c:otherwise>非公開</c:otherwise></c:choose>
+            <span class="badge ${projectTarget['public'] ? 'badge-info' : 'badge-neutral'}">
+                <c:choose><c:when test="${projectTarget['public']}">公開</c:when><c:otherwise>非公開</c:otherwise></c:choose>
             </span>
         </div>
         <p class="text-muted">作成者: <c:out value="${projectTarget.createdBy.displayName}" /> ／ 最終更新: <c:out value="${projectTarget.updatedAt}" /></p>
