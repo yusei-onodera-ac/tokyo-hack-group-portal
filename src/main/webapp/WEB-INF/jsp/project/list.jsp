@@ -71,14 +71,33 @@
                         </form>
                     </div>
 
-                    <div class="project-card__title"><a href="/projects/${project.id}"><c:out value="${project.title}" /></a></div>
+                    <div class="project-card__title flex items-center gap-2">
+                        <span class="avatar avatar-sm">
+                            <c:choose>
+                                <c:when test="${not empty project.iconStoredFileName}">
+                                    <img src="/projects/${project.id}/icon" alt="">
+                                </c:when>
+                                <c:otherwise>
+                                    <c:out value="${fn:substring(project.title, 0, 1)}" />
+                                </c:otherwise>
+                            </c:choose>
+                        </span>
+                        <a href="/projects/${project.id}"><c:out value="${project.title}" /></a>
+                    </div>
                     <p class="project-card__desc"><c:out value="${project.description}" /></p>
 
                     <div class="project-card__meta">
                         <div class="avatar-stack">
                             <c:forEach var="member" items="${project.members}" varStatus="loopStatus" end="3">
                                 <span class="avatar avatar-sm" title="<c:out value='${member.user.displayName}'/>">
-                                    <c:out value="${fn:substring(member.user.displayName, 0, 1)}" />
+                                    <c:choose>
+                                        <c:when test="${not empty member.user.avatarStoredFileName}">
+                                            <img src="/users/${member.user.id}/avatar" alt="">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:out value="${fn:substring(member.user.displayName, 0, 1)}" />
+                                        </c:otherwise>
+                                    </c:choose>
                                 </span>
                             </c:forEach>
                             <c:if test="${fn:length(project.members) > 4}">

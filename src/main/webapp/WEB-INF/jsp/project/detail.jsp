@@ -8,6 +8,16 @@
 <div class="page-header mt-4">
     <div class="page-header__title">
         <div class="flex items-center gap-2">
+            <span class="avatar">
+                <c:choose>
+                    <c:when test="${not empty projectTarget.iconStoredFileName}">
+                        <img src="/projects/${projectTarget.id}/icon" alt="">
+                    </c:when>
+                    <c:otherwise>
+                        <c:out value="${fn:substring(projectTarget.title, 0, 1)}" />
+                    </c:otherwise>
+                </c:choose>
+            </span>
             <h1 class="h1"><c:out value="${projectTarget.title}" /></h1>
             <span class="badge
                 <c:choose>
@@ -49,6 +59,19 @@
             </form>
         </div>
     </c:if>
+
+    <c:if test="${canManageStatus}">
+        <div class="card card-pad">
+            <h2 class="h2 mb-0">アイコン画像</h2>
+            <form action="/projects/${projectTarget.id}/icon" method="post" enctype="multipart/form-data" class="mt-4 form-row" style="align-items:flex-end;">
+                <div class="form-group">
+                    <label class="form-label" for="projectIconFile">画像ファイル（PNG/JPG/GIF/WEBP、3MBまで）</label>
+                    <input class="input" type="file" id="projectIconFile" name="file" accept="image/png,image/jpeg,image/gif,image/webp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">アップロード</button>
+            </form>
+        </div>
+    </c:if>
 </div>
 
 <h2 class="h2 mt-5">所属メンバー</h2>
@@ -65,7 +88,16 @@
             <c:forEach var="member" items="${projectTarget.members}">
                 <tr>
                     <td class="flex items-center gap-2">
-                        <span class="avatar avatar-sm"><c:out value="${fn:substring(member.user.displayName, 0, 1)}" /></span>
+                        <span class="avatar avatar-sm">
+                            <c:choose>
+                                <c:when test="${not empty member.user.avatarStoredFileName}">
+                                    <img src="/users/${member.user.id}/avatar" alt="">
+                                </c:when>
+                                <c:otherwise>
+                                    <c:out value="${fn:substring(member.user.displayName, 0, 1)}" />
+                                </c:otherwise>
+                            </c:choose>
+                        </span>
                         <c:out value="${member.user.displayName}" />
                     </td>
                     <td>
@@ -305,7 +337,16 @@
     </c:if>
     <c:forEach var="comment" items="${commentList}">
         <div class="comment-item">
-            <span class="avatar avatar-sm"><c:out value="${fn:substring(comment.author.displayName, 0, 1)}" /></span>
+            <span class="avatar avatar-sm">
+                <c:choose>
+                    <c:when test="${not empty comment.author.avatarStoredFileName}">
+                        <img src="/users/${comment.author.id}/avatar" alt="">
+                    </c:when>
+                    <c:otherwise>
+                        <c:out value="${fn:substring(comment.author.displayName, 0, 1)}" />
+                    </c:otherwise>
+                </c:choose>
+            </span>
             <div class="comment-item__body">
                 <strong><c:out value="${comment.author.displayName}" /></strong>
                 <span class="text-muted text-sm"> ・ <c:out value="${comment.createdAt}" /></span>

@@ -1,5 +1,6 @@
 package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserRole;
@@ -30,14 +33,17 @@ public class UserService {
     private final UserAccountRepository userAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailNotificationService emailNotificationService;
+    private final ImageStorageService imageStorageService;
 
     public UserService(
             UserAccountRepository userAccountRepository,
             PasswordEncoder passwordEncoder,
-            EmailNotificationService emailNotificationService) {
+            EmailNotificationService emailNotificationService,
+            ImageStorageService imageStorageService) {
         this.userAccountRepository = userAccountRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailNotificationService = emailNotificationService;
+        this.imageStorageService = imageStorageService;
     }
 
     /**
@@ -175,6 +181,26 @@ public class UserService {
             targetUser.activate();
         }
         userAccountRepository.save(targetUser);
+    }
+
+    /**
+     * アバター画像を更新する。既存の画像があれば置き換え時に削除される。
+     */
+    @Transactional
+    public UserAccount updateAvatar(Long userId, MultipartFile file) {
+        UserAccount targetUser = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたユーザーが見つかりません。ID: " + userId));
+
+        String storedFileName = imageStorageService.storeAvatar(userId, file, targetUser.getAvatarStoredFileName());
+        targetUser.changeAvatar(storedFileName);
+        return userAccountRepository.save(targetUser);
+    }
+
+    /**
+     * アバター画像のストリームを取得する。
+     */
+    public InputStream loadAvatarStream(Long userId, String storedFileName) {
+        return imageStorageService.loadAvatar(userId, storedFileName);
     }
 
     /**

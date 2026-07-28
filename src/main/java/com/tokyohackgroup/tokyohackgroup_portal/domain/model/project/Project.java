@@ -82,6 +82,10 @@ public class Project {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    /** アイコン画像のサーバーディスク上の保存ファイル名（未設定の場合は null） */
+    @Column(name = "icon_stored_file_name", length = 255)
+    private String iconStoredFileName;
+
     protected Project() {
     }
 
@@ -139,6 +143,10 @@ public class Project {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getIconStoredFileName() {
+        return iconStoredFileName;
     }
 
     /**
@@ -204,6 +212,14 @@ public class Project {
      */
     public void changeStatus(ProjectStatus newStatus) {
         this.status = newStatus;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * アイコン画像の保存ファイル名を更新する。
+     */
+    public void changeIcon(String newIconStoredFileName) {
+        this.iconStoredFileName = newIconStoredFileName;
         this.updatedAt = LocalDateTime.now();
     }
 }
