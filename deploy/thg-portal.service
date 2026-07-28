@@ -1,0 +1,18 @@
+[Unit]
+Description=Tokyo Hack Group Portal
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=thgportal
+Group=thgportal
+WorkingDirectory=/opt/thg-portal
+EnvironmentFile=/opt/thg-portal/env
+ExecStart=/usr/bin/java -Dspring.profiles.active=prod -jar /opt/thg-portal/app.war
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
