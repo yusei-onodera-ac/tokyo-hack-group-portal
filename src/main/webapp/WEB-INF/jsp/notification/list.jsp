@@ -18,7 +18,7 @@
     <c:when test="${empty notificationPage.content}">
         <div class="empty-state card">
             <div class="empty-state__icon">🔔</div>
-            <p>通知はまだありません。</p>
+            <p>未読の通知はありません。</p>
         </div>
     </c:when>
     <c:otherwise>
@@ -26,7 +26,6 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>状態</th>
                         <th>種別</th>
                         <th>内容</th>
                         <th>日時</th>
@@ -36,12 +35,6 @@
                 <tbody>
                     <c:forEach var="notification" items="${notificationPage.content}">
                         <tr>
-                            <td data-label="状態">
-                                <c:choose>
-                                    <c:when test="${notification.read}"><span class="badge badge-neutral">既読</span></c:when>
-                                    <c:otherwise><span class="badge badge-primary">未読</span></c:otherwise>
-                                </c:choose>
-                            </td>
                             <td data-label="種別"><c:out value="${notification.type.displayLabel}" /></td>
                             <td class="cell-stack" data-label="内容">
                                 <strong><c:out value="${notification.title}" /></strong>
@@ -50,11 +43,9 @@
                             </td>
                             <td data-label="日時">${df:formatDateTime(notification.createdAt)}</td>
                             <td data-label="操作">
-                                <c:if test="${!notification.read}">
-                                    <form action="/notifications/${notification.id}/read" method="post">
-                                        <button type="submit" class="btn btn-sm btn-secondary">既読にする</button>
-                                    </form>
-                                </c:if>
+                                <form action="/notifications/${notification.id}/read" method="post">
+                                    <button type="submit" class="btn btn-sm btn-secondary">既読にする</button>
+                                </form>
                             </td>
                         </tr>
                     </c:forEach>

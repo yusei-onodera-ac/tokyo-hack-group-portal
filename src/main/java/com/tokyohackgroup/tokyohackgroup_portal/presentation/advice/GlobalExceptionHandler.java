@@ -1,11 +1,14 @@
 package com.tokyohackgroup.tokyohackgroup_portal.presentation.advice;
 
+import java.io.IOException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.AuditLogService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
@@ -24,6 +27,15 @@ public class GlobalExceptionHandler {
 
     public GlobalExceptionHandler(AuditLogService auditLogService) {
         this.auditLogService = auditLogService;
+    }
+
+    /**
+     * favicon.ico等、ブラウザが自動的に要求する静的リソースの404はアプリのエラーではないため、
+     * 監査ログには記録せず、通常の404として応答する。
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public void handleMissingStaticResource(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)

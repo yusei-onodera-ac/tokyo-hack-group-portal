@@ -85,7 +85,7 @@
                         </span>
                         <a href="/projects/${project.id}"><c:out value="${project.title}" /></a>
                     </div>
-                    <p class="project-card__desc"><c:out value="${project.description}" /></p>
+                    <p class="project-card__desc text-preserve-lines"><c:out value="${project.description}" /></p>
 
                     <div class="project-card__meta">
                         <div class="avatar-stack">

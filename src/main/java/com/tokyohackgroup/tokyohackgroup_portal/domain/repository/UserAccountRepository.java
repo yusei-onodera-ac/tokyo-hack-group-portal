@@ -1,10 +1,14 @@
 package com.tokyohackgroup.tokyohackgroup_portal.domain.repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
@@ -36,4 +40,17 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
      */
     Page<UserAccount> findByDisplayNameContainingIgnoreCaseOrEmailAddressContainingIgnoreCase(
             String displayNameKeyword, String emailAddressKeyword, Pageable pageable);
+
+    /**
+     * パスワード再設定フローで、発行済みトークンからユーザーを特定するために使用する。
+     */
+    Optional<UserAccount> findByResetToken(String resetToken);
+
+    /**
+     * オンライン/オフライン表示のため、リクエスト毎の最終アクティブ日時を軽量に更新する。
+     * エンティティのロード・保存を伴わない直接UPDATEにより、毎リクエストの負荷を抑える。
+     */
+    @Modifying
+    @Query("update UserAccount u set u.lastActiveAt = :time where u.id = :userId")
+    void touchLastActiveAt(@Param("userId") Long userId, @Param("time") LocalDateTime time);
 }

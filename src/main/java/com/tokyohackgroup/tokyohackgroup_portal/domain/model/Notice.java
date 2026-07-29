@@ -17,6 +17,8 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
+
 /**
  * システム内のお知らせ（掲示板）情報を管理する永続化エンティティ。
  */
@@ -54,6 +56,11 @@ public class Notice {
     /** 閲覧が許可された限定メンバーのリスト */
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<UserAccount> allowedMembers = new HashSet<>();
+
+    /** 関連するプロジェクト（任意）。設定すると、そのプロジェクトのメンバーに一覧上でチェック表示される。 */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "related_project_id")
+    private Project relatedProject;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -146,6 +153,10 @@ public class Notice {
         return allowedMembers;
     }
 
+    public Project getRelatedProject() {
+        return relatedProject;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -179,5 +190,13 @@ public class Notice {
      */
     public void addAllowedMember(UserAccount member) {
         this.allowedMembers.add(member);
+    }
+
+    /**
+     * 関連プロジェクトを設定・変更する（未指定にする場合は null を渡す）。
+     */
+    public void assignRelatedProject(Project newRelatedProject) {
+        this.relatedProject = newRelatedProject;
+        this.updatedAt = LocalDateTime.now();
     }
 }

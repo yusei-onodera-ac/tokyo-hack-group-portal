@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.Notice;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.comment.Comment;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.document.Document;
@@ -43,6 +44,12 @@ public class CommentService {
         return comments;
     }
 
+    public List<Comment> findByNotice(Notice notice) {
+        List<Comment> comments = commentRepository.findByNoticeOrderByCreatedAtAsc(notice);
+        comments.forEach(comment -> comment.getAuthor().getDisplayName());
+        return comments;
+    }
+
     @Transactional
     public void postProjectComment(Project project, UserAccount author, String content) {
         commentRepository.save(Comment.forProject(project, author, content));
@@ -62,6 +69,17 @@ public class CommentService {
         notifyOtherMembers(project, author, NotificationType.DOCUMENT_COMMENT,
                 author.getDisplayName() + " さんがコメントしました: " + document.getTitle(),
                 "/projects/" + projectId + "/documents/" + document.getId());
+    }
+
+    @Transactional
+    public void postNoticeComment(Notice notice, UserAccount author, String content) {
+        commentRepository.save(Comment.forNotice(notice, author, content));
+
+        UserAccount noticeAuthor = notice.getAuthor();
+        if (!noticeAuthor.getId().equals(author.getId())) {
+            notificationService.notify(noticeAuthor, NotificationType.NOTICE_COMMENT,
+                    author.getDisplayName() + " さんがコメントしました: " + notice.getTitle(), null, "/notices/" + notice.getId());
+        }
     }
 
     @Transactional

@@ -1,11 +1,15 @@
 package com.tokyohackgroup.tokyohackgroup_portal.application.service;
 
 import java.io.InputStream;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,20 +34,37 @@ public class UserService {
     /** 管理者設定画面での1ページあたりの表示件数 */
     public static final int ADMIN_PAGE_SIZE = 15;
 
+    /** パスワード再設定トークンの有効期限（分） */
+    private static final long RESET_TOKEN_VALID_MINUTES = 30;
+
     private final UserAccountRepository userAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailNotificationService emailNotificationService;
     private final ImageStorageService imageStorageService;
+    private final String baseUrl;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public UserService(
             UserAccountRepository userAccountRepository,
             PasswordEncoder passwordEncoder,
             EmailNotificationService emailNotificationService,
-            ImageStorageService imageStorageService) {
+            ImageStorageService imageStorageService,
+            @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
         this.userAccountRepository = userAccountRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailNotificationService = emailNotificationService;
         this.imageStorageService = imageStorageService;
+        this.baseUrl = baseUrl;
+    }
+
+    /**
+     * オンライン/オフライン表示のため、最終アクティブ日時を更新する。
+     * {@link com.tokyohackgroup.tokyohackgroup_portal.presentation.interceptor.AuthenticationInterceptor}
+     * から一定間隔ごとに呼び出される想定。
+     */
+    @Transactional
+    public void touchLastActiveAt(Long userId) {
+        userAccountRepository.touchLastActiveAt(userId, LocalDateTime.now());
     }
 
     /**
@@ -221,5 +242,55 @@ public class UserService {
         emailNotificationService.sendInviteEmail(emailAddress, displayName, temporaryRawPassword);
 
         return temporaryRawPassword;
+    }
+
+    /**
+     * パスワード再設定を要求する。該当ユーザーが存在する場合のみトークンを発行しメールを送信する。
+     *
+     * <p>メールアドレスの登録有無を外部に漏らさないため、ユーザーが存在しない場合も例外を投げず静かに終了する。
+     * 呼び出し元は結果に関わらず同一の案内メッセージを表示すること。</p>
+     */
+    @Transactional
+    public void requestPasswordReset(String emailAddress) {
+        Optional<UserAccount> userOptional = userAccountRepository.findByEmailAddress(emailAddress);
+        if (userOptional.isEmpty() || !userOptional.get().isActive()) {
+            return;
+        }
+
+        UserAccount targetUser = userOptional.get();
+        String token = generateResetToken();
+        targetUser.issuePasswordResetToken(token, LocalDateTime.now().plusMinutes(RESET_TOKEN_VALID_MINUTES));
+        userAccountRepository.save(targetUser);
+
+        String resetLink = baseUrl + "/reset-password?token=" + token;
+        emailNotificationService.sendPasswordResetEmail(targetUser.getEmailAddress(), targetUser.getDisplayName(), resetLink);
+    }
+
+    /**
+     * トークンを検証したうえでパスワードを再設定する。使用済みトークンは失効させる。
+     *
+     * @return 再設定に成功した場合 true、トークンが無効・期限切れの場合 false
+     */
+    @Transactional
+    public boolean resetPassword(String token, String newRawPassword) {
+        Optional<UserAccount> userOptional = userAccountRepository.findByResetToken(token);
+        if (userOptional.isEmpty() || !userOptional.get().isResetTokenValid(token)) {
+            return false;
+        }
+
+        UserAccount targetUser = userOptional.get();
+        targetUser.changeEncryptedPassword(passwordEncoder.encode(newRawPassword));
+        targetUser.clearPasswordResetToken();
+        userAccountRepository.save(targetUser);
+        return true;
+    }
+
+    /**
+     * URLセーフなランダムトークンを生成する。
+     */
+    private String generateResetToken() {
+        byte[] randomBytes = new byte[32];
+        secureRandom.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 }

@@ -144,7 +144,8 @@ public class SchedulingPollService {
         for (UserAccount invitee : invitees) {
             notificationService.notify(invitee, NotificationType.POLL_OPENED, "日程調整に招待されました: " + title, null, "/polls/" + savedPoll.getId());
             if (notificationService.isPollOpenedEmailEnabled(invitee)) {
-                emailNotificationService.sendPollOpenedEmail(invitee.getEmailAddress(), invitee.getDisplayName(), title, organizer.getDisplayName());
+                emailNotificationService.sendPollOpenedEmail(
+                        invitee.getEmailAddress(), invitee.getDisplayName(), savedPoll.getId(), title, organizer.getDisplayName(), responseDeadline);
             }
         }
 
@@ -205,7 +206,8 @@ public class SchedulingPollService {
         for (UserAccount invitee : inviteeList) {
             notificationService.notify(invitee, NotificationType.POLL_CONFIRMED, "日程が確定しました: " + poll.getTitle(), null, "/polls/" + poll.getId());
             if (notificationService.isPollConfirmedEmailEnabled(invitee)) {
-                emailNotificationService.sendPollConfirmedEmail(invitee.getEmailAddress(), invitee.getDisplayName(), poll.getTitle(), candidate.getCandidateDateTime());
+                emailNotificationService.sendPollConfirmedEmail(
+                        invitee.getEmailAddress(), invitee.getDisplayName(), poll.getId(), poll.getTitle(), candidate.getCandidateDateTime());
             }
         }
     }
@@ -256,6 +258,7 @@ public class SchedulingPollService {
         poll.getCandidates().size();
         if (poll.getProject() != null) {
             poll.getProject().getTitle();
+            poll.getProject().getMembers().size();
         }
         if (poll.getConfirmedCandidate() != null) {
             poll.getConfirmedCandidate().getCandidateDateTime();

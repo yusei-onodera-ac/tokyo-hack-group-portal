@@ -45,4 +45,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      */
     @Query("SELECT p.id FROM Project p WHERE EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project = p AND pm.user = :user)")
     List<Long> findProjectIdsForMember(@Param("user") UserAccount user);
+
+    /**
+     * お知らせ作成・編集画面の「関連プロジェクト」選択肢用に、全プロジェクトをタイトル順で取得する。
+     */
+    List<Project> findAllByOrderByTitleAsc();
 }

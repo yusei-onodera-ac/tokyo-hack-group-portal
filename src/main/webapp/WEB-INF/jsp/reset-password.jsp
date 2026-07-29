@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ログイン - Tokyo Hack Group Portal</title>
+    <title>パスワード再設定 - Tokyo Hack Group Portal</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -16,29 +16,28 @@
                 <span class="sidebar__brand-mark" style="width:48px; height:48px; font-size:1.1rem;">THG</span>
                 <div>
                     <div class="h2">Tokyo Hack Group Portal</div>
-                    <p class="text-muted text-sm">アカウントにログイン</p>
+                    <p class="text-muted text-sm">新しいパスワードの設定</p>
                 </div>
             </div>
 
-            <c:if test="${not empty infoMessage}">
-                <div class="alert alert-success"><c:out value="${infoMessage}" /></div>
-            </c:if>
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger"><c:out value="${errorMessage}" /></div>
             </c:if>
 
-            <form action="/login" method="post">
+            <form action="/reset-password" method="post">
+                <input type="hidden" name="token" value="<c:out value='${token}'/>">
                 <div class="form-group">
-                    <label class="form-label" for="emailAddress">メールアドレス</label>
-                    <input class="input" type="email" id="emailAddress" name="emailAddress" required value="<c:out value='${savedEmailAddress}'/>">
+                    <label class="form-label" for="newPassword">新しいパスワード</label>
+                    <input class="input" type="password" id="newPassword" name="newPassword" required minlength="8">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="rawPassword">パスワード</label>
-                    <input class="input" type="password" id="rawPassword" name="rawPassword" required>
+                    <label class="form-label" for="confirmPassword">新しいパスワード（確認）</label>
+                    <input class="input" type="password" id="confirmPassword" name="confirmPassword" required minlength="8">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block mt-2">ログイン</button>
+                <button type="submit" class="btn btn-primary btn-block mt-2">パスワードを設定する</button>
             </form>
-            <p class="text-center mt-4"><a href="/forgot-password">パスワードをお忘れですか？</a></p>
+
+            <p class="text-center mt-4"><a href="/login">← ログイン画面へ戻る</a></p>
         </div>
     </div>
 </body>

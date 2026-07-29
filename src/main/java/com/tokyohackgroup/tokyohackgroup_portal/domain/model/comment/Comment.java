@@ -12,15 +12,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.Notice;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.document.Document;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
 
 /**
- * プロジェクトまたはドキュメントへのコメントを表す永続化エンティティ。
+ * プロジェクト・ドキュメント・お知らせへのコメントを表す永続化エンティティ。
  *
- * <p>{@link #project} と {@link #document} はどちらか一方のみが設定される（プロジェクトへのコメントか、
- * ドキュメントへのコメントかを表す）。</p>
+ * <p>{@link #project}・{@link #document}・{@link #notice} はいずれか一つのみが設定される
+ * （コメント対象がどれかを表す）。</p>
  */
 @Entity
 @Table(name = "comments")
@@ -39,6 +40,10 @@ public class Comment {
     private Document document;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "notice_id")
+    private Notice notice;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private UserAccount author;
 
@@ -51,20 +56,25 @@ public class Comment {
     protected Comment() {
     }
 
-    private Comment(Project project, Document document, UserAccount author, String content) {
+    private Comment(Project project, Document document, Notice notice, UserAccount author, String content) {
         this.project = project;
         this.document = document;
+        this.notice = notice;
         this.author = author;
         this.content = content;
         this.createdAt = LocalDateTime.now();
     }
 
     public static Comment forProject(Project project, UserAccount author, String content) {
-        return new Comment(project, null, author, content);
+        return new Comment(project, null, null, author, content);
     }
 
     public static Comment forDocument(Document document, UserAccount author, String content) {
-        return new Comment(null, document, author, content);
+        return new Comment(null, document, null, author, content);
+    }
+
+    public static Comment forNotice(Notice notice, UserAccount author, String content) {
+        return new Comment(null, null, notice, author, content);
     }
 
     public Long getId() {
@@ -77,6 +87,10 @@ public class Comment {
 
     public Document getDocument() {
         return document;
+    }
+
+    public Notice getNotice() {
+        return notice;
     }
 
     public UserAccount getAuthor() {
