@@ -15,6 +15,9 @@ public final class DateTimeFormatFunctions {
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
+    /** この時間内にアクセスがあれば「オンライン」とみなす閾値（分） */
+    private static final long ONLINE_THRESHOLD_MINUTES = 5;
+
     private DateTimeFormatFunctions() {
     }
 
@@ -24,5 +27,15 @@ public final class DateTimeFormatFunctions {
 
     public static String formatDate(LocalDate date) {
         return (date != null) ? date.format(DATE_FORMAT) : "";
+    }
+
+    /**
+     * 直近 {@value #ONLINE_THRESHOLD_MINUTES} 分以内のアクセスがあれば true（オンライン扱い）を返す。
+     */
+    public static boolean isOnline(LocalDateTime lastActiveAt) {
+        if (lastActiveAt == null) {
+            return false;
+        }
+        return lastActiveAt.isAfter(LocalDateTime.now().minusMinutes(ONLINE_THRESHOLD_MINUTES));
     }
 }

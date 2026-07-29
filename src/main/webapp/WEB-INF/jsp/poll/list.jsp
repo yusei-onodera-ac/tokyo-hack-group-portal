@@ -49,7 +49,12 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td data-label="プロジェクト"><c:out value="${empty poll.project ? '－' : poll.project.title}" /></td>
+                            <td class="cell-stack" data-label="プロジェクト">
+                                <c:out value="${empty poll.project ? '－' : poll.project.title}" />
+                                <c:if test="${not empty poll.project && poll.project.isMember(sessionScope.loginUser)}">
+                                    <br><span class="badge badge-success badge-sm">✓ 参加プロジェクト</span>
+                                </c:if>
+                            </td>
                             <td data-label="ステータス">
                                 <span class="badge ${poll.status == 'CLOSED' ? 'badge-success' : 'badge-warning'}">
                                     <c:out value="${poll.status.displayLabel}" />

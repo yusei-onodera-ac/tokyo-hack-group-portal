@@ -23,8 +23,19 @@
     </c:forEach>
 </div>
 
-<div class="table-wrap">
+<div class="table-wrap table-wrap--fixed">
     <table class="table">
+        <colgroup>
+            <col style="width:16%">
+            <col style="width:34%">
+            <col style="width:10%">
+            <col style="width:14%">
+            <col style="width:10%">
+            <col style="width:12%">
+            <c:if test="${sessionScope.loginUser.admin}">
+                <col style="width:8%">
+            </c:if>
+        </colgroup>
         <thead>
             <tr>
                 <th>タイトル</th>
@@ -41,8 +52,16 @@
         <tbody>
             <c:forEach var="notice" items="${noticeList}">
                 <tr>
-                    <td data-label="タイトル"><strong><c:out value="${notice.title}" /></strong></td>
-                    <td class="cell-stack" data-label="本文"><c:out value="${notice.content}" /></td>
+                    <td class="cell-stack" data-label="タイトル">
+                        <a href="/notices/${notice.id}"><strong><c:out value="${notice.title}" /></strong></a>
+                        <c:if test="${not empty notice.relatedProject && notice.relatedProject.isMember(sessionScope.loginUser)}">
+                            <br><span class="badge badge-success badge-sm">✓ 参加プロジェクト</span>
+                        </c:if>
+                    </td>
+                    <td class="cell-stack" data-label="本文">
+                        <div class="clamp-content"><c:out value="${notice.content}" /></div>
+                        <a class="clamp-toggle" href="/notices/${notice.id}">続きを読む →</a>
+                    </td>
                     <td data-label="カテゴリ"><span class="badge badge-neutral"><c:out value="${notice.category.displayLabel}" /></span></td>
                     <td data-label="タグ"><c:out value="${notice.tags}" /></td>
                     <td data-label="作成者"><c:out value="${notice.author.displayName}" /></td>

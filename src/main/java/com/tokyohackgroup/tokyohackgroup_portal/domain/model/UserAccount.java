@@ -45,6 +45,18 @@ public class UserAccount {
     @Column(name = "avatar_stored_file_name", length = 255)
     private String avatarStoredFileName;
 
+    /** パスワード再設定用の一時トークン（未発行の場合は null） */
+    @Column(name = "reset_token", length = 100)
+    private String resetToken;
+
+    /** パスワード再設定トークンの有効期限（未発行の場合は null） */
+    @Column(name = "reset_token_expires_at")
+    private LocalDateTime resetTokenExpiresAt;
+
+    /** 直近のリクエスト日時（オンライン/オフライン表示に使用。未アクセスの場合は null） */
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
     /**
      * JPA（Hibernate）の規定に従うためのデフォルトコンストラクタ。
      * 外部ドメイン層での不完全な無引数インスタンス化を防止するため、アクセス範囲を protected に限定。
@@ -99,6 +111,10 @@ public class UserAccount {
         return avatarStoredFileName;
     }
 
+    public LocalDateTime getLastActiveAt() {
+        return lastActiveAt;
+    }
+
     /**
      * 呼び出し元で `role == UserRole.ADMINISTRATOR` のような内部状態の比較を直接書かせない（デメテルの法則）。
      * 管理者チェックの意図を明確にし、条件分岐の散乱を防ぐ。
@@ -149,5 +165,31 @@ public class UserAccount {
      */
     public void changeAvatar(String newAvatarStoredFileName) {
         this.avatarStoredFileName = newAvatarStoredFileName;
+    }
+
+    /**
+     * パスワード再設定用トークンを発行する。
+     */
+    public void issuePasswordResetToken(String token, LocalDateTime expiresAt) {
+        this.resetToken = token;
+        this.resetTokenExpiresAt = expiresAt;
+    }
+
+    /**
+     * 発行済みのパスワード再設定トークンを、有効期限内かどうかも含めて検証する。
+     */
+    public boolean isResetTokenValid(String token) {
+        return resetToken != null
+                && resetToken.equals(token)
+                && resetTokenExpiresAt != null
+                && resetTokenExpiresAt.isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * パスワード再設定トークンを使用済みとして失効させる。
+     */
+    public void clearPasswordResetToken() {
+        this.resetToken = null;
+        this.resetTokenExpiresAt = null;
     }
 }

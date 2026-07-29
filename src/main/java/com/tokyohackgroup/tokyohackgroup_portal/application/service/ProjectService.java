@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.notification.NotificationType;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.Project;
+import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectMember;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectMemberRole;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.project.ProjectStatus;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.repository.CommentRepository;
@@ -39,6 +41,7 @@ public class ProjectService {
     private final TaskService taskService;
     private final DocumentService documentService;
     private final CalendarService calendarService;
+    private final NotificationService notificationService;
 
     public ProjectService(
             ProjectRepository projectRepository,
@@ -48,7 +51,8 @@ public class ProjectService {
             SchedulingPollService schedulingPollService,
             TaskService taskService,
             DocumentService documentService,
-            CalendarService calendarService) {
+            CalendarService calendarService,
+            NotificationService notificationService) {
         this.projectRepository = projectRepository;
         this.userAccountRepository = userAccountRepository;
         this.imageStorageService = imageStorageService;
@@ -57,6 +61,7 @@ public class ProjectService {
         this.taskService = taskService;
         this.documentService = documentService;
         this.calendarService = calendarService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -92,6 +97,13 @@ public class ProjectService {
     public List<Project> findProjectsForUser(UserAccount user) {
         List<Long> projectIds = projectRepository.findProjectIdsForMember(user);
         return projectRepository.findAllById(projectIds);
+    }
+
+    /**
+     * お知らせ作成・編集画面の「関連プロジェクト」選択肢用に、全プロジェクトを取得する。
+     */
+    public List<Project> findAllProjectsForSelection() {
+        return projectRepository.findAllByOrderByTitleAsc();
     }
 
     public Optional<Project> findById(Long projectId) {
@@ -237,6 +249,34 @@ public class ProjectService {
 
         // プロジェクト本体（メンバー・お気に入りは自動的にカスケード削除される）
         projectRepository.delete(targetProject);
+    }
+
+    /**
+     * プロジェクトへの参加を申請する。公開プロジェクトかつ非メンバーのみ実行可能。
+     * 申請するとプロジェクトの全 OWNER に通知が届き、OWNER が編集画面からメンバー追加する運用となる。
+     */
+    @Transactional
+    public void requestToJoin(Long projectId, UserAccount requester) {
+        Project targetProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("指定されたプロジェクトが見つかりません。ID: " + projectId));
+
+        if (!targetProject.isPublic()) {
+            throw new IllegalStateException("非公開のプロジェクトには参加を申請できません。");
+        }
+        if (targetProject.isMember(requester)) {
+            throw new IllegalStateException("既にこのプロジェクトのメンバーです。");
+        }
+
+        for (ProjectMember member : targetProject.getMembers()) {
+            if (ProjectMemberRole.OWNER.equals(member.getRole())) {
+                notificationService.notify(
+                        member.getUser(),
+                        NotificationType.PROJECT_JOIN_REQUEST,
+                        requester.getDisplayName() + " さんがプロジェクトへの参加を申請しました: " + targetProject.getTitle(),
+                        null,
+                        "/projects/" + projectId + "/edit");
+            }
+        }
     }
 
     /**

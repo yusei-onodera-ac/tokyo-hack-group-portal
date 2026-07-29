@@ -8,6 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:out value="${pageTitle}" /> - Tokyo Hack Group Portal</title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
@@ -52,6 +53,12 @@
             </a>
             <a class="sidebar__link ${activeNav == 'settings' ? 'is-active' : ''}" href="/settings">
                 <span class="sidebar__link-icon">⚙️</span>マイページ
+            </a>
+            <a class="sidebar__link ${activeNav == 'guide' ? 'is-active' : ''}" href="/guide">
+                <span class="sidebar__link-icon">📘</span>操作方法
+            </a>
+            <a class="sidebar__link ${activeNav == 'faq' ? 'is-active' : ''}" href="/faq">
+                <span class="sidebar__link-icon">❓</span>よくある質問
             </a>
             <a class="sidebar__link ${activeNav == 'contact' ? 'is-active' : ''}" href="/contact">
                 <span class="sidebar__link-icon">✉️</span>お問い合わせ

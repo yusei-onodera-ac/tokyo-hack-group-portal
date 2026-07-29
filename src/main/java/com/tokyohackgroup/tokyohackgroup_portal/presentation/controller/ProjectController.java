@@ -37,6 +37,7 @@ public class ProjectController {
 
     private static final String VIEW_PROJECT_LIST = "project/list";
     private static final String VIEW_PROJECT_DETAIL = "project/detail";
+    private static final String VIEW_PROJECT_EDIT = "project/edit";
     private static final String REDIRECT_PROJECT_LIST = "redirect:/projects";
 
     private static final String MODEL_KEY_PAGE_TITLE = "pageTitle";
@@ -135,23 +136,65 @@ public class ProjectController {
         model.addAttribute(MODEL_KEY_STATUS_LIST, ProjectStatus.values());
         boolean canManage = project.isOwner(loginUser) || loginUser.isAdmin();
         model.addAttribute("canManageStatus", canManage);
+        model.addAttribute("isMember", project.isMember(loginUser));
         model.addAttribute("documentList", documentService.findByProject(project));
         model.addAttribute("categoryList", DocumentCategory.values());
         model.addAttribute("taskList", taskService.findByProject(project));
         model.addAttribute("taskStatusList", TaskStatus.values());
         model.addAttribute("commentList", commentService.findByProject(project));
 
-        if (canManage) {
-            Set<Long> memberIds = project.getMembers().stream()
-                    .map(member -> member.getUser().getId())
-                    .collect(Collectors.toSet());
-            List<UserAccount> addableUsers = userService.fetchAllActiveUsers().stream()
-                    .filter(candidate -> !memberIds.contains(candidate.getId()))
-                    .toList();
-            model.addAttribute("addableUserList", addableUsers);
+        return VIEW_PROJECT_DETAIL;
+    }
+
+    /**
+     * プロジェクトへの参加を申請する。公開プロジェクトの非メンバーのみ実行可能。
+     * 申請するとプロジェクトの OWNER に通知が届く。
+     */
+    @PostMapping("/{id}/join-request")
+    public String processJoinRequest(@PathVariable("id") Long projectId, HttpSession session) {
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        try {
+            projectService.requestToJoin(projectId, loginUser);
+        } catch (IllegalArgumentException | IllegalStateException ignoredError) {
+            // 対象外プロジェクト・非公開・既にメンバーの場合は何もせず詳細画面へ戻す
         }
 
-        return VIEW_PROJECT_DETAIL;
+        return "redirect:/projects/" + projectId;
+    }
+
+    /**
+     * プロジェクト編集画面（タイトル・概要・ステータス・アイコン・メンバー管理・削除）を表示する。
+     * OWNER または管理者のみアクセス可能。
+     */
+    @GetMapping("/{id}/edit")
+    public String showProjectEdit(@PathVariable("id") Long projectId, HttpSession session, Model model) {
+        Optional<Project> projectOptional = projectService.findById(projectId);
+
+        if (projectOptional.isEmpty()) {
+            return REDIRECT_PROJECT_LIST;
+        }
+
+        UserAccount loginUser = (UserAccount) session.getAttribute(LoginController.SESSION_KEY_LOGIN_USER);
+        Project project = projectOptional.get();
+
+        if (!project.isOwner(loginUser) && !loginUser.isAdmin()) {
+            return "redirect:/projects/" + projectId;
+        }
+
+        model.addAttribute(MODEL_KEY_PAGE_TITLE, project.getTitle() + " の編集");
+        model.addAttribute(MODEL_KEY_ACTIVE_NAV, "projects");
+        model.addAttribute(MODEL_KEY_PROJECT_TARGET, project);
+        model.addAttribute(MODEL_KEY_STATUS_LIST, ProjectStatus.values());
+
+        Set<Long> memberIds = project.getMembers().stream()
+                .map(member -> member.getUser().getId())
+                .collect(Collectors.toSet());
+        List<UserAccount> addableUsers = userService.fetchAllActiveUsers().stream()
+                .filter(candidate -> !memberIds.contains(candidate.getId()))
+                .toList();
+        model.addAttribute("addableUserList", addableUsers);
+
+        return VIEW_PROJECT_EDIT;
     }
 
     /**
@@ -168,10 +211,10 @@ public class ProjectController {
         try {
             projectService.updateDetails(projectId, title, description, loginUser);
         } catch (IllegalStateException ignoredPermissionError) {
-            // 権限がない場合は変更せず詳細画面へ戻す
+            // 権限がない場合は変更せず編集画面へ戻す
         }
 
-        return "redirect:/projects/" + projectId;
+        return "redirect:/projects/" + projectId + "/edit";
     }
 
     /**
@@ -187,10 +230,10 @@ public class ProjectController {
         try {
             projectService.addMember(projectId, userId, loginUser);
         } catch (IllegalArgumentException | IllegalStateException ignoredError) {
-            // 不正なユーザー指定・権限不足の場合は追加せず詳細画面へ戻す
+            // 不正なユーザー指定・権限不足の場合は追加せず編集画面へ戻す
         }
 
-        return "redirect:/projects/" + projectId;
+        return "redirect:/projects/" + projectId + "/edit";
     }
 
     /**
@@ -206,10 +249,10 @@ public class ProjectController {
         try {
             projectService.removeMember(projectId, userId, loginUser);
         } catch (IllegalArgumentException | IllegalStateException ignoredError) {
-            // 対象外ユーザー・唯一のOWNER除外・権限不足の場合は変更せず詳細画面へ戻す
+            // 対象外ユーザー・唯一のOWNER除外・権限不足の場合は変更せず編集画面へ戻す
         }
 
-        return "redirect:/projects/" + projectId;
+        return "redirect:/projects/" + projectId + "/edit";
     }
 
     /**
@@ -221,7 +264,7 @@ public class ProjectController {
         try {
             projectService.deleteProject(projectId, loginUser);
         } catch (IllegalStateException ignoredPermissionError) {
-            return "redirect:/projects/" + projectId;
+            return "redirect:/projects/" + projectId + "/edit";
         }
 
         return REDIRECT_PROJECT_LIST;
@@ -240,10 +283,10 @@ public class ProjectController {
         try {
             projectService.changeStatus(projectId, newStatus, loginUser);
         } catch (IllegalStateException ignoredPermissionError) {
-            // 権限がない場合は状態を変更せず詳細画面へ戻す
+            // 権限がない場合は状態を変更せず編集画面へ戻す
         }
 
-        return "redirect:/projects/" + projectId;
+        return "redirect:/projects/" + projectId + "/edit";
     }
 
     /**
@@ -259,10 +302,10 @@ public class ProjectController {
         try {
             projectService.updateIcon(projectId, file, loginUser);
         } catch (IllegalArgumentException | IllegalStateException iconUpdateError) {
-            // 不正な画像・権限不足の場合は更新せず詳細画面へ戻す
+            // 不正な画像・権限不足の場合は更新せず編集画面へ戻す
         }
 
-        return "redirect:/projects/" + projectId;
+        return "redirect:/projects/" + projectId + "/edit";
     }
 
     /**

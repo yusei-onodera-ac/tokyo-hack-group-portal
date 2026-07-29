@@ -13,7 +13,7 @@
             <span class="badge badge-neutral"><c:out value="${documentTarget.documentType.displayLabel}" /></span>
             <span class="badge badge-primary"><c:out value="${documentTarget.category.displayLabel}" /></span>
         </div>
-        <p class="text-muted"><c:out value="${documentTarget.description}" /></p>
+        <p class="text-muted text-preserve-lines"><c:out value="${documentTarget.description}" /></p>
         <p class="text-muted text-sm">作成者: <c:out value="${documentTarget.createdBy.displayName}" /> ／ 最終更新: ${df:formatDateTime(documentTarget.updatedAt)}</p>
     </div>
 </div>

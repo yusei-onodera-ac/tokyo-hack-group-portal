@@ -35,66 +35,20 @@
     </div>
     <div class="page-header__actions">
         <a class="btn btn-secondary" href="/calendar?projectId=${projectTarget.id}">📅 このプロジェクトのカレンダー</a>
-        <c:if test="${canManageStatus}">
-            <form action="/projects/${projectTarget.id}/delete" method="post" onsubmit="return confirm('このプロジェクトを削除しますか？タスク・ドキュメント・コメント・日程調整などすべての関連データが削除され、元に戻せません。');">
-                <button type="submit" class="btn btn-danger">プロジェクトを削除</button>
+        <c:if test="${!isMember && projectTarget['public']}">
+            <form action="/projects/${projectTarget.id}/join-request" method="post">
+                <button type="submit" class="btn btn-primary">🙋 参加を申請する</button>
             </form>
+        </c:if>
+        <c:if test="${canManageStatus}">
+            <a class="btn btn-primary" href="/projects/${projectTarget.id}/edit">✏️ このプロジェクトを編集</a>
         </c:if>
     </div>
 </div>
 
-<div class="grid grid-2">
-    <div class="card card-pad">
-        <h2 class="h2 mb-0">概要</h2>
-        <c:choose>
-            <c:when test="${canManageStatus}">
-                <form action="/projects/${projectTarget.id}/edit" method="post" class="mt-2">
-                    <div class="form-group">
-                        <label class="form-label" for="editTitle">タイトル</label>
-                        <input class="input" type="text" id="editTitle" name="title" value="<c:out value='${projectTarget.title}'/>" required maxlength="200">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="editDescription">概要</label>
-                        <textarea class="textarea" id="editDescription" name="description" maxlength="1000"><c:out value="${projectTarget.description}" /></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">保存する</button>
-                </form>
-            </c:when>
-            <c:otherwise>
-                <p class="mt-2"><c:out value="${projectTarget.description}" /></p>
-            </c:otherwise>
-        </c:choose>
-    </div>
-
-    <c:if test="${canManageStatus}">
-        <div class="card card-pad">
-            <h2 class="h2 mb-0">ステータス管理</h2>
-            <form action="/projects/${projectTarget.id}/status" method="post" class="mt-4 form-row" style="align-items:flex-end;">
-                <div class="form-group">
-                    <label class="form-label" for="status">ステータス変更</label>
-                    <select class="select" id="status" name="status">
-                        <c:forEach var="st" items="${statusList}">
-                            <option value="${st}" ${st == projectTarget.status ? 'selected' : ''}><c:out value="${st.displayLabel}" /></option>
-                        </c:forEach>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">更新する</button>
-            </form>
-        </div>
-    </c:if>
-
-    <c:if test="${canManageStatus}">
-        <div class="card card-pad">
-            <h2 class="h2 mb-0">アイコン画像</h2>
-            <form action="/projects/${projectTarget.id}/icon" method="post" enctype="multipart/form-data" class="mt-4 form-row" style="align-items:flex-end;">
-                <div class="form-group">
-                    <label class="form-label" for="projectIconFile">画像ファイル（PNG/JPG/GIF/WEBP、3MBまで）</label>
-                    <input class="input" type="file" id="projectIconFile" name="file" accept="image/png,image/jpeg,image/gif,image/webp" required>
-                </div>
-                <button type="submit" class="btn btn-primary">アップロード</button>
-            </form>
-        </div>
-    </c:if>
+<div class="card card-pad">
+    <h2 class="h2 mb-0">概要</h2>
+    <p class="mt-2 text-preserve-lines"><c:out value="${projectTarget.description}" /></p>
 </div>
 
 <h2 class="h2 mt-5">所属メンバー</h2>
@@ -105,7 +59,6 @@
                 <th>表示名</th>
                 <th>プロジェクト内の役割</th>
                 <th>システム権限</th>
-                <c:if test="${canManageStatus}"><th>操作</th></c:if>
             </tr>
         </thead>
         <tbody>
@@ -128,34 +81,11 @@
                         <span class="badge ${member.role == 'OWNER' ? 'badge-primary' : 'badge-neutral'}"><c:out value="${member.role.displayLabel}" /></span>
                     </td>
                     <td data-label="システム権限"><c:out value="${member.user.role.displayLabel}" /></td>
-                    <c:if test="${canManageStatus}">
-                        <td data-label="操作">
-                            <form action="/projects/${projectTarget.id}/members/${member.user.id}/delete" method="post" onsubmit="return confirm('このメンバーを除外しますか？');">
-                                <button type="submit" class="btn btn-sm btn-danger">除外</button>
-                            </form>
-                        </td>
-                    </c:if>
                 </tr>
             </c:forEach>
         </tbody>
     </table>
 </div>
-
-<c:if test="${canManageStatus}">
-    <div class="card card-pad mt-2" style="max-width: 480px;">
-        <form action="/projects/${projectTarget.id}/members" method="post" class="form-row" style="align-items:flex-end;">
-            <div class="form-group">
-                <label class="form-label" for="addMemberUserId">メンバーを追加</label>
-                <select class="select" id="addMemberUserId" name="userId" required>
-                    <c:forEach var="candidate" items="${addableUserList}">
-                        <option value="${candidate.id}"><c:out value="${candidate.displayName}" /></option>
-                    </c:forEach>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary" ${empty addableUserList ? 'disabled' : ''}>追加する</button>
-        </form>
-    </div>
-</c:if>
 
 <div class="page-header mt-5">
     <div class="page-header__title">
@@ -190,7 +120,7 @@
                         <tr>
                             <td class="cell-stack" data-label="タイトル">
                                 <strong><c:out value="${task.title}" /></strong>
-                                <c:if test="${not empty task.description}"><br><span class="text-muted text-sm"><c:out value="${task.description}" /></span></c:if>
+                                <c:if test="${not empty task.description}"><br><span class="text-muted text-sm text-preserve-lines"><c:out value="${task.description}" /></span></c:if>
                             </td>
                             <td data-label="担当者"><c:out value="${empty task.assignee ? '未割当' : task.assignee.displayName}" /></td>
                             <td data-label="期限"><c:out value="${empty task.dueDate ? '－' : task.dueDate}" /></td>

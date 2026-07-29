@@ -19,4 +19,10 @@
         <function-class>com.tokyohackgroup.tokyohackgroup_portal.presentation.util.DateTimeFormatFunctions</function-class>
         <function-signature>java.lang.String formatDate(java.time.LocalDate)</function-signature>
     </function>
+
+    <function>
+        <name>isOnline</name>
+        <function-class>com.tokyohackgroup.tokyohackgroup_portal.presentation.util.DateTimeFormatFunctions</function-class>
+        <function-signature>boolean isOnline(java.time.LocalDateTime)</function-signature>
+    </function>
 </taglib>

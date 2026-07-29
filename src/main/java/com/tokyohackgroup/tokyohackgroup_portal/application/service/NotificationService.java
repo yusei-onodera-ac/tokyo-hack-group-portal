@@ -40,9 +40,12 @@ public class NotificationService {
         appNotificationRepository.save(new AppNotification(recipient, type, title, message, linkUrl));
     }
 
+    /**
+     * 未読の通知のみを取得する。既読にした通知は一覧から消える。
+     */
     public Page<AppNotification> fetchRecentForUser(UserAccount user, int pageNumber) {
         Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AppNotification> notificationPage = appNotificationRepository.findByRecipientOrderByCreatedAtDesc(user, pageable);
+        Page<AppNotification> notificationPage = appNotificationRepository.findByRecipientAndIsReadFalseOrderByCreatedAtDesc(user, pageable);
         notificationPage.forEach(notification -> notification.getRecipient().getDisplayName());
         return notificationPage;
     }
@@ -64,11 +67,9 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(UserAccount user) {
         Pageable largePage = PageRequest.of(0, 500, Sort.by(Sort.Direction.DESC, "createdAt"));
-        appNotificationRepository.findByRecipientOrderByCreatedAtDesc(user, largePage).forEach(notification -> {
-            if (!notification.isRead()) {
-                notification.markAsRead();
-                appNotificationRepository.save(notification);
-            }
+        appNotificationRepository.findByRecipientAndIsReadFalseOrderByCreatedAtDesc(user, largePage).forEach(notification -> {
+            notification.markAsRead();
+            appNotificationRepository.save(notification);
         });
     }
 

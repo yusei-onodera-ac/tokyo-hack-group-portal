@@ -21,7 +21,13 @@ public enum NotificationType {
     DOCUMENT_COMMENT("ドキュメントへのコメント"),
 
     /** タスクの割当 */
-    TASK_ASSIGNED("タスク割当");
+    TASK_ASSIGNED("タスク割当"),
+
+    /** プロジェクトへの参加申請 */
+    PROJECT_JOIN_REQUEST("参加申請"),
+
+    /** お知らせへのコメント */
+    NOTICE_COMMENT("お知らせへのコメント");
 
     /** 画面表示用の日本語ラベル */
     private final String displayLabel;

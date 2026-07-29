@@ -31,12 +31,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(authenticationInterceptor)
 				.addPathPatterns("/**")
-				.excludePathPatterns("/login", "/logout", "/h2-console/**", "/css/**", "/js/**");
+				.excludePathPatterns("/login", "/logout", "/forgot-password", "/reset-password",
+						"/h2-console/**", "/css/**", "/js/**", "/favicon.ico");
 
 		// メンテナンスモード中は管理者以外の全アクセスをメンテナンス画面へ誘導する
 		registry.addInterceptor(maintenanceModeInterceptor)
 				.addPathPatterns("/**")
-				.excludePathPatterns("/login", "/logout", "/admin/**", "/h2-console/**", "/css/**", "/js/**");
+				.excludePathPatterns("/login", "/logout", "/forgot-password", "/reset-password",
+						"/admin/**", "/h2-console/**", "/css/**", "/js/**", "/favicon.ico");
 
 		// お知らせ・外部リンクの作成/編集/削除、および管理者設定画面全体は管理者権限保持者のみに制限する
 		registry.addInterceptor(adminAccessInterceptor)

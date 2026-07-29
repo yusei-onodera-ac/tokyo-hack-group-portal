@@ -26,7 +26,7 @@
                 </c:when>
             </c:choose>
         </div>
-        <p class="text-muted"><c:out value="${pollTarget.description}" /></p>
+        <p class="text-muted text-preserve-lines"><c:out value="${pollTarget.description}" /></p>
         <p class="text-muted text-sm">
             主催者: <c:out value="${pollTarget.organizer.displayName}" />
             <c:if test="${not empty pollTarget.project}"> ／ プロジェクト: <c:out value="${pollTarget.project.title}" /></c:if>

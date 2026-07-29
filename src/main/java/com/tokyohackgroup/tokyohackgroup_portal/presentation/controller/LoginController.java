@@ -14,17 +14,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.AuditLogService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.AuthenticationService;
 import com.tokyohackgroup.tokyohackgroup_portal.application.service.SystemSettingService;
+import com.tokyohackgroup.tokyohackgroup_portal.application.service.UserService;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.UserAccount;
 import com.tokyohackgroup.tokyohackgroup_portal.domain.model.audit.AuditLogCategory;
 
 /**
- * ログイン・ログアウト処理および認証セッションの生成を制御するコントローラー。
+ * ログイン・ログアウト処理、パスワード再設定、および認証セッションの生成を制御するコントローラー。
  */
 @Controller
 public class LoginController {
 
     /** ログイン画面のJSPビュー識別名 */
     private static final String LOGIN_VIEW_NAME = "login";
+
+    /** パスワード再設定申請画面のJSPビュー識別名 */
+    private static final String FORGOT_PASSWORD_VIEW_NAME = "forgot-password";
+
+    /** パスワード再設定画面のJSPビュー識別名 */
+    private static final String RESET_PASSWORD_VIEW_NAME = "reset-password";
 
     /** ダッシュボード画面へのリダイレクトURL */
     private static final String REDIRECT_DASHBOARD_URL = "redirect:/";
@@ -41,17 +48,26 @@ public class LoginController {
     /** 認証失敗時の標準エラー表示テキスト */
     private static final String AUTHENTICATION_FAILED_MESSAGE = "メールアドレスまたはパスワードが正しくありません。";
 
+    /**
+     * 登録有無を外部に漏らさないため、申請結果に関わらず表示する共通の案内メッセージ。
+     */
+    private static final String PASSWORD_RESET_REQUESTED_MESSAGE =
+            "ご入力いただいたメールアドレスが登録されている場合、パスワード再設定用のメールを送信しました。メールボックス（迷惑メールフォルダ含む）をご確認ください。";
+
     private final AuthenticationService authenticationService;
     private final AuditLogService auditLogService;
     private final SystemSettingService systemSettingService;
+    private final UserService userService;
 
     public LoginController(
             AuthenticationService authenticationService,
             AuditLogService auditLogService,
-            SystemSettingService systemSettingService) {
+            SystemSettingService systemSettingService,
+            UserService userService) {
         this.authenticationService = authenticationService;
         this.auditLogService = auditLogService;
         this.systemSettingService = systemSettingService;
+        this.userService = userService;
     }
 
     /**
@@ -96,6 +112,63 @@ public class LoginController {
         auditLogService.record(authenticatedUser, AuditLogCategory.LOGIN, "ログイン成功", remoteAddress, null);
 
         return REDIRECT_DASHBOARD_URL;
+    }
+
+    /**
+     * パスワード再設定の申請画面を表示する。
+     */
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return FORGOT_PASSWORD_VIEW_NAME;
+    }
+
+    /**
+     * パスワード再設定を申請する。メールアドレスの登録有無に関わらず同一のメッセージを表示する。
+     */
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(@RequestParam("emailAddress") String emailAddress, Model model) {
+        userService.requestPasswordReset(emailAddress);
+        model.addAttribute("infoMessage", PASSWORD_RESET_REQUESTED_MESSAGE);
+        return FORGOT_PASSWORD_VIEW_NAME;
+    }
+
+    /**
+     * パスワード再設定画面を表示する。トークンが無効・期限切れの場合はエラーを表示する。
+     */
+    @GetMapping("/reset-password")
+    public String showResetPasswordForm(@RequestParam("token") String token, Model model) {
+        model.addAttribute("token", token);
+        return RESET_PASSWORD_VIEW_NAME;
+    }
+
+    /**
+     * 新しいパスワードを設定する。トークンが無効・期限切れの場合はエラーを表示する。
+     */
+    @PostMapping("/reset-password")
+    public String processResetPassword(
+            @RequestParam("token") String token,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword,
+            HttpServletRequest request,
+            Model model) {
+
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("token", token);
+            model.addAttribute(MODEL_KEY_ERROR_MESSAGE, "新しいパスワードと確認用パスワードが一致しません。");
+            return RESET_PASSWORD_VIEW_NAME;
+        }
+
+        boolean succeeded = userService.resetPassword(token, newPassword);
+        if (!succeeded) {
+            model.addAttribute("token", token);
+            model.addAttribute(MODEL_KEY_ERROR_MESSAGE, "リンクの有効期限が切れているか、無効なリンクです。もう一度パスワード再設定をお申し込みください。");
+            return RESET_PASSWORD_VIEW_NAME;
+        }
+
+        auditLogService.record(null, AuditLogCategory.OPERATION, "パスワード再設定", request.getRemoteAddr(), null);
+        model.addAttribute(MODEL_KEY_SAVED_EMAIL, "");
+        model.addAttribute("infoMessage", "パスワードを再設定しました。新しいパスワードでログインしてください。");
+        return LOGIN_VIEW_NAME;
     }
 
     /**

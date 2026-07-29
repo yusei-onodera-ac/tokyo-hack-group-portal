@@ -31,6 +31,16 @@
                 <input class="input" type="text" id="tags" name="tags" value="<c:out value='${noticeTarget.tags}'/>">
             </div>
         </div>
+        <div class="form-group">
+            <label class="form-label" for="relatedProjectId">関連プロジェクト（任意）</label>
+            <select class="select" id="relatedProjectId" name="relatedProjectId">
+                <option value="">指定しない</option>
+                <c:forEach var="proj" items="${projectList}">
+                    <option value="${proj.id}" ${not empty noticeTarget.relatedProject && proj.id == noticeTarget.relatedProject.id ? 'selected' : ''}><c:out value="${proj.title}" /></option>
+                </c:forEach>
+            </select>
+            <span class="form-hint">指定すると、そのプロジェクトのメンバーに一覧上でチェック表示されます。</span>
+        </div>
         <button type="submit" class="btn btn-primary mt-2">更新を保存する</button>
     </form>
 </div>

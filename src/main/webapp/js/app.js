@@ -47,6 +47,19 @@
     }
   });
 
+  // 長文が実際に3行を超えて省略されている場合のみ「続きを読む」ボタンを表示する。
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".clamp-content").forEach(function (content) {
+      var toggle = content.nextElementSibling;
+      if (!toggle || !toggle.classList.contains("clamp-toggle")) {
+        return;
+      }
+      if (content.scrollHeight <= content.clientHeight + 1) {
+        toggle.style.display = "none";
+      }
+    });
+  });
+
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
       document.querySelectorAll(".modal-overlay.is-open").forEach(function (modal) {
